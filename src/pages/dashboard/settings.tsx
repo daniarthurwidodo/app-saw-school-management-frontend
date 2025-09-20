@@ -1,15 +1,94 @@
 import React from 'react';
-import Sidebar from '../../components/Sidebar';
+import DashboardLayout from '../../components/DashboardLayout';
 
 const Settings = () => {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
-      <Sidebar />
-      <main style={{ flex: 1, padding: '20px', backgroundColor: '#f5f5f5' }}>
-        <h1>Settings</h1>
-        <p>Configure application settings here.</p>
-      </main>
-    </div>
+    <DashboardLayout>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">System Settings</h1>
+        <p className="text-gray-600">Configure application settings and preferences.</p>
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">General Settings</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">School Name</label>
+              <input 
+                type="text" 
+                defaultValue="Springfield Elementary" 
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+              <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                <option>2023-2024</option>
+                <option>2024-2025</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+              <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                <option>Eastern Time (ET)</option>
+                <option>Central Time (CT)</option>
+                <option>Mountain Time (MT)</option>
+                <option>Pacific Time (PT)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Notification Settings</h2>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-gray-800">Email Notifications</p>
+                <p className="text-sm text-gray-600">Send important updates via email</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" defaultChecked />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-gray-800">Assignment Reminders</p>
+                <p className="text-sm text-gray-600">Notify students about upcoming assignments</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" defaultChecked />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-gray-800">Grade Updates</p>
+                <p className="text-sm text-gray-600">Notify parents when grades are updated</p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" className="sr-only peer" />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Account Management</h2>
+            <p className="text-sm text-gray-600">Manage administrator privileges and access</p>
+          </div>
+          <button className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all shadow-md mt-4 md:mt-0">
+            Manage Accounts
+          </button>
+        </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

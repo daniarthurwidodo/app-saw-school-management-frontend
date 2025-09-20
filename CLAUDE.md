@@ -11,42 +11,39 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture Overview
 
-This is a Next.js TypeScript school management frontend with a modular component architecture:
+This is a Next.js TypeScript dashboard application with TanStack integration:
 
-### Authentication System
-- Uses React Context (`components/auth/AuthProvider.tsx`) for authentication state
-- **Demo Mode**: Client-side authentication with localStorage persistence (no API calls)
-- `useAuth` hook provides `isAuthenticated`, `login()`, and `logout()` methods
-- `ProtectedRoute` component wraps pages requiring authentication
-- Accepts any email/password combination for demonstration purposes
+### State Management
+- Uses TanStack Query (`@tanstack/react-query`) for server state management
+- Uses React Context for client state management
+- `providers/TanstackProvider.tsx` wraps all pages with QueryClientProvider
 
 ### Component Structure
-- **`components/auth/`** - Authentication context and protected route components
-- **`components/layout/`** - Layout components (Navigation, Footer, Sidebar, Header, Layout)
-- **`components/ui/`** - Reusable UI components (Card, Button, Login, Register)
-- Index files in each directory export components for clean imports
+- **`components/`** - Reusable UI components
+  - `Sidebar.tsx` - Navigation sidebar
+  - `Header.tsx` - Page headers
+  - `TanstackExample.tsx` - TanStack Table and Query example
+- **`providers/`** - React context providers
+  - `TanstackProvider.tsx` - TanStack Query provider
 
 ### Page Structure
-- **`pages/index.tsx`** - Login page (homepage)
-- **`pages/register.tsx`** - User registration
-- **`pages/dashboard.tsx`** - Main dashboard (protected)
-- **`pages/dashboard/`** - Dashboard sub-pages (documents, tasks, settings) - all protected
-- **`pages/about.tsx`** - About page
+- **`pages/index.tsx`** - Login page (homepage) with redirect to dashboard
+- **`pages/dashboard/index.tsx`** - Main dashboard (protected)
+- **`pages/dashboard/`** - Dashboard sub-pages (users, documents, tasks, settings)
 
 ### App Configuration
-- `pages/_app.tsx` wraps all pages with AuthProvider and loads Bootstrap + global CSS
-- Bootstrap 5.3.8 for styling
-- Custom monochromatic gray color scheme defined in CSS variables
-- Poppins font family from Google Fonts
+- `pages/_app.tsx` wraps all pages with TanstackProvider and loads global CSS
+- Custom CSS for styling
+- Clean, professional design
 
 ### Technology Stack
 - Next.js 15.5.3 with TypeScript
 - React 19.1.1
-- Bootstrap 5.3.8 for UI components
-- No additional state management (uses React Context for auth)
+- TanStack Query for data fetching
+- TanStack Table for data presentation
 
 ### Development Notes
 - Uses Pages Router (not App Router)
 - TypeScript strict mode disabled in tsconfig.json
-- Authentication is simulated (demo token) - replace with real API calls
-- All dashboard routes require authentication via ProtectedRoute wrapper
+- All dashboard routes are accessible through sidebar navigation
+- TanStack Query Devtools available in development mode

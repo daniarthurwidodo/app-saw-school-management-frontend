@@ -1,12 +1,12 @@
-# School Management System - Project Summary
+# Next.js Dashboard with TanStack - Project Summary
 
 ## 📋 Project Overview
-A modern, responsive school management system built with Next.js, TypeScript, and Bootstrap. This comprehensive web application provides tools for managing students, teachers, classes, and administrative tasks in an educational environment.
+A modern, responsive dashboard application built with Next.js, TypeScript, and integrated with TanStack Table and TanStack Query. This application provides a foundation for data-driven web applications with professional dashboard layout and sidebar navigation.
 
 ## 🚀 Current Status
 - **Phase**: Active Development
 - **Version**: 1.0.0
-- **Last Updated**: December 2024
+- **Last Updated**: September 2025
 - **Build Status**: ✅ Passing
 - **Mobile Responsive**: ✅ Optimized
 
@@ -17,125 +17,104 @@ A modern, responsive school management system built with Next.js, TypeScript, an
 - **React 19.1.1** - UI library
 - **TypeScript 5.9.2** - Type safety
 
-### Styling & UI
-- **Bootstrap 5.3.8** - CSS framework
-- **Custom CSS** - Professional monochromatic gray theme
-- **Poppins Font** - Google Fonts integration
-- **Responsive Design** - Mobile-first approach
+### State Management & Data
+- **TanStack Query** - Server state management
+- **TanStack Table** - Headless UI for tables
+- **React Context** - Client state management
 
-### Authentication
-- **React Context** - State management for auth
-- **localStorage** - Token persistence
-- **Protected Routes** - Route-level authentication
+### Styling & UI
+- **Custom CSS** - Professional styling
+- **Responsive Design** - Mobile-first approach
 
 ## 📁 Project Structure
 
 ```
 ├── .claude/                    # Claude agents and documentation
 ├── components/                 # React components
-│   ├── auth/                  # Authentication components
-│   │   ├── AuthProvider.tsx   # Auth context provider
-│   │   ├── ProtectedRoute.tsx # Route protection
-│   │   └── index.ts          # Exports
-│   ├── layout/               # Layout components
-│   │   ├── Layout.tsx        # Main layout wrapper
-│   │   ├── Navigation.tsx    # Top navigation
-│   │   ├── Sidebar.tsx       # Dashboard sidebar
-│   │   ├── Header.tsx        # Page headers
-│   │   ├── Footer.tsx        # Footer component
-│   │   └── index.ts          # Exports
-│   └── ui/                   # UI components
-│       ├── Button.tsx        # Custom button component
-│       ├── Card.tsx          # Card component
-│       ├── Login.tsx         # Login form
-│       ├── Register.tsx      # Registration form
-│       └── index.ts          # Exports
+│   ├── Sidebar.tsx            # Navigation sidebar
+│   ├── Header.tsx             # Page headers
+│   └── TanstackExample.tsx    # TanStack Table and Query example
 ├── pages/                    # Next.js pages
 │   ├── dashboard/            # Dashboard pages
+│   │   ├── index.tsx         # Dashboard home
+│   │   ├── users.tsx         # Users management
 │   │   ├── documents.tsx     # Document management
 │   │   ├── tasks.tsx         # Task management
 │   │   └── settings.tsx      # System settings
-│   ├── _app.tsx             # App wrapper
-│   ├── index.tsx            # Login page (homepage)
-│   ├── register.tsx         # Registration page
-│   ├── dashboard.tsx        # Main dashboard
-│   └── about.tsx            # About page
+│   ├── _app.tsx             # App wrapper with providers
+│   └── index.tsx            # Login page (homepage)
+├── providers/               # React context providers
+│   └── TanstackProvider.tsx # TanStack Query provider
 ├── styles/                  # Styling
 │   └── globals.css          # Global styles
-├── public/                  # Static assets
 ├── package.json            # Dependencies
 ├── tsconfig.json           # TypeScript config
 ├── next-env.d.ts           # Next.js types
-├── CLAUDE.md               # Claude development guide
+├── QWEN.md                 # Qwen development guide
 └── README.md               # Project documentation
 ```
 
 ## 🎨 Design System
 
 ### Color Palette
-- **Primary**: Deep gray monochromatic scheme
-- **Background**: Light gray (#f1f3f5)
-- **Cards**: White (#ffffff)
-- **Sidebar**: Dark gray gradient
-- **Accent**: Gray-700 (#495057)
+- **Primary**: Clean white and gray scheme
+- **Background**: Light gray (#f5f5f5)
+- **Sidebar**: Dark gray (#333)
+- **Cards**: White with subtle shadows
 
 ### Typography
-- **Font Family**: Poppins (Google Fonts)
-- **Weights**: 100-900 available
+- **Font Family**: System fonts (-apple-system, BlinkMacSystemFont, etc.)
+- **Weights**: Standard CSS font weights
 - **Responsive**: Scalable text sizes
 
 ### Components
 - **Cards**: Subtle shadows, rounded corners
-- **Buttons**: Rounded, hover effects
-- **Forms**: Clean, accessible inputs
-- **Navigation**: Responsive, collapsible sidebar
+- **Buttons**: Clean, accessible buttons
+- **Navigation**: Sidebar with hover effects
+- **Tables**: Clean data presentation
 
 ## 🔧 Key Features
 
-### Authentication System
-- ✅ Login/logout functionality
-- ✅ Protected route implementation
-- ✅ Token-based authentication simulation
-- ✅ Persistent login state
-- ✅ Context-based state management
-
-### Dashboard
-- ✅ Professional responsive design
-- ✅ Statistics cards with metrics
-- ✅ Quick action cards
-- ✅ Recent activity feed
-- ✅ Today's schedule widget
+### Dashboard Layout
+- ✅ Sidebar navigation
+- ✅ Responsive grid system
+- ✅ Statistics cards
+- ✅ Consistent styling
 - ✅ Mobile-optimized layout
 
+### TanStack Integration
+- ✅ TanStack Query for data fetching
+- ✅ TanStack Table for data presentation
+- ✅ React Query Devtools integration
+- ✅ Example component demonstrating usage
+
 ### Navigation
-- ✅ Collapsible sidebar
-- ✅ Icon-based navigation
+- ✅ Sidebar with multiple pages
 - ✅ Active state indicators
 - ✅ Mobile-responsive design
 - ✅ Professional styling
 
 ### Pages
-- ✅ Login page (centered, no header)
-- ✅ Registration page (centered, no header)
-- ✅ Dashboard (main interface)
-- ✅ Documents management
-- ✅ Tasks management
+- ✅ Login page with redirect
+- ✅ Dashboard home page
+- ✅ Users management page
+- ✅ Documents management page
+- ✅ Tasks management page
 - ✅ Settings page
-- ✅ About page
 
 ## 📱 Mobile Responsiveness
 
 ### Breakpoints
-- **Mobile**: < 576px
-- **Tablet**: 576px - 768px
-- **Desktop**: > 768px
+- **Mobile**: < 768px
+- **Tablet**: 768px - 1024px
+- **Desktop**: > 1024px
 
 ### Mobile Features
-- ✅ Stacked sidebar navigation
+- ✅ Flexible sidebar (becomes top navigation on mobile)
 - ✅ Responsive grid system
 - ✅ Touch-friendly buttons
 - ✅ Optimized spacing
-- ✅ Centered login/register forms
+- ✅ Centered login form
 
 ## 🚧 Development Setup
 
@@ -159,39 +138,32 @@ npm run lint        # Code linting
 ## 📈 Performance Optimizations
 
 ### Bundle Size
-- **Total First Load JS**: ~127 kB
-- **Page-specific**: 0.5-2.5 kB per page
+- **Total First Load JS**: Depends on dependencies
+- **Page-specific**: Minimal per page
 - **Static Generation**: All pages pre-rendered
 
 ### CSS Optimizations
 - **Custom Properties**: CSS variables for theming
 - **Mobile-first**: Responsive design approach
-- **Minimal Framework**: Bootstrap utility classes
-- **No Animations**: Removed hover animations for performance
+- **Minimal Framework**: No heavy CSS frameworks
+- **Clean Styles**: Well-organized CSS
 
 ## 🔒 Security Considerations
 
-### Authentication
-- Token-based system (demo implementation)
-- Protected route guards
-- Logout functionality
-- No sensitive data exposure
-
 ### Best Practices
-- Input validation on forms
 - TypeScript for type safety
 - No inline JavaScript
 - Clean component architecture
+- Proper data handling with TanStack Query
 
 ## 🎯 Future Enhancements
 
 ### Planned Features
 - [ ] Real API integration
+- [ ] Advanced TanStack Table features
+- [ ] Form validation
 - [ ] User management system
 - [ ] Advanced reporting
-- [ ] Email notifications
-- [ ] File upload functionality
-- [ ] Calendar integration
 - [ ] Role-based permissions
 
 ### Technical Improvements
@@ -205,7 +177,7 @@ npm run lint        # Code linting
 ## 👥 Team & Roles
 
 ### Development
-- **Primary Developer**: Claude Code AI Assistant
+- **Primary Developer**: Qwen Code AI Assistant
 - **Architecture**: Modern React patterns
 - **Styling**: Professional UI/UX design
 - **Testing**: Manual testing and validation
@@ -219,7 +191,7 @@ npm run lint        # Code linting
 ## 📞 Support & Documentation
 
 ### Resources
-- **CLAUDE.md**: Development guidelines
+- **QWEN.md**: Development guidelines
 - **README.md**: Setup instructions
 - **Component Documentation**: Inline comments
 - **TypeScript**: Type definitions
@@ -232,6 +204,6 @@ npm run lint        # Code linting
 
 ---
 
-**Last Updated**: December 2024
-**Maintained by**: Claude Code Development Team
+**Last Updated**: September 2025
+**Maintained by**: Qwen Code Development Team
 **License**: ISC
