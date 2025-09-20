@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
-import { Button } from '../ui/Button';
+import { Button } from './Button';
+import { Input } from './input';
+import { Card, CardContent, CardHeader, CardTitle } from './Card';
 import { useAuth } from '../auth';
 
 interface LoginProps {
@@ -36,49 +38,50 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="card">
-      <div className="card-body">
-        <h3 className="card-title text-center mb-4">Login to Your Account</h3>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle className="text-center">Login to Your Account</CardTitle>
+      </CardHeader>
+      <CardContent>
         {error && (
-          <div className="alert alert-danger" role="alert">
+          <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md mb-4">
             {error}
           </div>
         )}
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label htmlFor="email" className="form-label">Email</label>
-            <input
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="email" className="text-sm font-medium leading-none">Email</label>
+            <Input
               type="email"
-              className="form-control"
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              placeholder="Enter your email"
             />
           </div>
-          <div className="mb-3">
-            <label htmlFor="password" className="form-label">Password</label>
-            <input
+          <div className="space-y-2">
+            <label htmlFor="password" className="text-sm font-medium leading-none">Password</label>
+            <Input
               type="password"
-              className="form-control"
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              placeholder="Enter your password"
             />
           </div>
-          <div className="d-grid">
-            <Button 
-              type="submit" 
-              variant="primary" 
-              disabled={isLoading}
-            >
-              {isLoading ? 'Logging in...' : 'Login'}
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            variant="default"
+            disabled={isLoading}
+            className="w-full"
+          >
+            {isLoading ? 'Logging in...' : 'Login'}
+          </Button>
         </form>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

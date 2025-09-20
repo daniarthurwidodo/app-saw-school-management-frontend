@@ -6,12 +6,10 @@ interface LoadingProps {
 
 export const Loading: React.FC<LoadingProps> = ({ message = 'Loading...' }) => {
   return (
-    <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
+    <div className="flex justify-center items-center h-screen">
       <div className="text-center">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">{message}</span>
-        </div>
-        <p className="mt-2 text-muted">{message}</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+        <p className="mt-2 text-muted-foreground">{message}</p>
       </div>
     </div>
   );

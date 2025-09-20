@@ -87,19 +87,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <>
       {/* Mobile Overlay */}
-      {isMobileOpen && <div className="mobile-overlay d-block d-md-none" onClick={handleMobileMenuClose} />}
+      {isMobileOpen && <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={handleMobileMenuClose} />}
 
-      <div className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`}>
-      <div className="sidebar-header">
-        <div className="d-flex align-items-center justify-content-between">
-          <div className="d-flex align-items-center">
-            <div className="sidebar-logo me-2">
+      <div className={`sidebar ${isCollapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''} bg-gradient-to-b from-gray-800 to-gray-900 text-gray-300 min-h-screen flex flex-col transition-all duration-300`}>
+      <div className="sidebar-header p-4 border-b border-gray-700">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="sidebar-logo mr-2">
               <GraduationCap size={24} />
             </div>
-            {!isCollapsed && <h5 className="mb-0 sidebar-title">School Management</h5>}
+            {!isCollapsed && <h5 className="mb-0 sidebar-title font-semibold text-white">School Management</h5>}
           </div>
           <button
-            className="btn btn-link sidebar-toggle d-none d-md-block"
+            className="hidden md:block text-gray-300 hover:text-white p-1 rounded"
             onClick={() => setIsCollapsed(!isCollapsed)}
             aria-label="Toggle sidebar"
           >
@@ -108,19 +108,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      <div className="sidebar-menu">
-        <ul className="nav flex-column">
+      <div className="sidebar-menu flex-1 flex flex-col">
+        <ul className="flex flex-col space-y-1 p-2">
           {menuItems.map((item) => {
             const IconComponent = item.icon;
             return (
-              <li key={item.id} className="nav-item">
+              <li key={item.id}>
                 <Link
                   href={item.href}
-                  className={`nav-link d-flex align-items-center ${activeItem === item.id ? 'active' : ''}`}
+                  className={`flex items-center p-3 rounded-lg transition-colors ${
+                    activeItem === item.id
+                      ? 'bg-gray-700 text-white'
+                      : 'hover:bg-gray-700 hover:text-white'
+                  }`}
                   title={item.label}
                   onClick={handleMobileMenuClose}
                 >
-                  <span className="menu-icon me-3">
+                  <span className="menu-icon mr-3 flex items-center">
                     <IconComponent size={20} />
                   </span>
                   {!isCollapsed && <span className="menu-text">{item.label}</span>}
@@ -131,17 +135,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </ul>
 
         <div className="sidebar-footer mt-auto">
-          <div className="nav-item">
+          <div>
             <a
-              className="nav-link d-flex align-items-center logout-link"
+              className="flex items-center p-3 rounded-lg text-red-400 hover:bg-red-900 hover:bg-opacity-20 hover:text-red-300 cursor-pointer"
               onClick={() => {
                 handleMobileMenuClose();
                 handleLogout();
               }}
-              style={{ cursor: 'pointer' }}
               title="Logout"
             >
-              <span className="menu-icon me-3">
+              <span className="menu-icon mr-3 flex items-center">
                 <LogOut size={20} />
               </span>
               {!isCollapsed && <span className="menu-text">Logout</span>}

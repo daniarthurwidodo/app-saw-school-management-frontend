@@ -9,6 +9,11 @@ A modern school management system built with Next.js, TypeScript, and Bootstrap.
 - Parent access
 - Attendance tracking
 - Grade management
+- Document management with search, filter, and pagination
+- Task management with Kanban board
+- User management with search, filter, and pagination
+- Settings configuration
+- Dashboard with statistics and activity feed
 - Monochromatic deep gray color scheme
 - Poppins font for improved readability
 - Modular component architecture
@@ -23,6 +28,8 @@ A modern school management system built with Next.js, TypeScript, and Bootstrap.
 - [TypeScript](https://www.typescriptlang.org/) - Typed JavaScript
 - [Bootstrap](https://getbootstrap.com/) - CSS framework
 - [CSS](https://developer.mozilla.org/en-US/docs/Web/CSS) - Custom styling
+- [Lucide React](https://lucide.dev/) - Icon library
+- [@dnd-kit](https://docs.dndkit.com/) - Drag and drop library
 
 ## Getting Started
 
@@ -88,6 +95,7 @@ npm start
 │   └── register.tsx      # Registration page
 ├── styles/               # CSS styles
 ├── public/               # Static assets
+│   └── data/             # JSON data files
 ├── package.json          # Project dependencies and scripts
 └── README.md             # Project documentation
 ```
@@ -113,7 +121,7 @@ The application follows a modular architecture with:
 
 - **Auth Components**: Authentication context and protected route components
 - **Layout Components**: Reusable components for page structure (Navigation, Footer, Sidebar, Layout)
-- **UI Components**: Reusable presentational components (Card, Button, Login, Register)
+- **UI Components**: Reusable presentational components (Card, Button, Login, Register, Loading)
 - **Pages**: Individual pages that compose components to create views
 
 This structure makes it easy to maintain and extend the application.
@@ -143,11 +151,63 @@ The application includes a complete authentication system:
 
 1. **Homepage (/)** - Login page
 2. **Dashboard (/dashboard)** - Main application dashboard with sidebar (protected)
-3. **Documents (/dashboard/documents)** - Document management (protected)
-4. **Tasks (/dashboard/tasks)** - Task management (protected)
-5. **Settings (/dashboard/settings)** - System settings (protected)
-6. **Register (/register)** - User registration page
-7. **About (/about)** - About the application
+3. **Users (/dashboard/users)** - User management with search, filter, and pagination (protected)
+4. **Documents (/dashboard/documents)** - Document management with search, filter, and pagination (protected)
+5. **Tasks (/dashboard/tasks)** - Task management with Kanban board and drag-and-drop (protected)
+6. **Settings (/dashboard/settings)** - System settings (protected)
+7. **Register (/register)** - User registration page
+8. **About (/about)** - About the application
+
+## Dashboard Features
+
+The dashboard includes:
+
+- Statistics cards showing key metrics
+- Recent activity feed
+- Upcoming events
+- Quick action buttons
+- Responsive layout for all screen sizes
+
+## User Management
+
+The user management page includes:
+
+- Search functionality
+- Role and status filtering
+- Pagination
+- Data table view
+- Action buttons for each user
+
+## Document Management
+
+The document management page includes:
+
+- Search functionality
+- Category, type, and status filtering
+- Pagination
+- Data table view
+- Action buttons for each document
+
+## Task Management
+
+The task management page includes:
+
+- Kanban board with three columns (To Do, In Progress, Done)
+- Drag-and-drop functionality using @dnd-kit
+- Task and subtask support
+- Priority and status indicators
+- Progress tracking
+- Filtering and search capabilities
+
+## Settings Page
+
+The settings page includes:
+
+- Profile settings
+- Security configuration
+- Notification preferences
+- Data management
+- System preferences
 
 ## Color Scheme
 
@@ -164,6 +224,50 @@ To customize the color scheme, modify the CSS variables in `styles/globals.css`.
 
 The application uses the Poppins font family from Google Fonts, which provides excellent readability and a modern appearance. The font is loaded via CDN in `styles/globals.css`.
 
+## Development Tools
+
+### Debugging Features
+
+The application includes comprehensive debugging tools to help with development:
+
+1. **Debug Panel** - A draggable panel that displays real-time application state
+2. **Debug Context** - Centralized debugging information management
+3. **Debug Toggle** - Easy enable/disable of debugging features
+4. **Debug Hooks** - Custom hooks for tracking renders, state changes, and performance
+
+To enable debugging:
+- Click the "Enable Debug" button in the bottom-right corner during development
+- The debug panel can be dragged to any position on the screen
+- Debug information is automatically collected from various components
+
+### Debug Information Collected
+
+- Component render counts
+- State changes
+- Function calls
+- Performance metrics
+- API responses
+- Filter and search operations
+- User interactions
+- Authentication status
+
+### Custom Debug Hooks
+
+- `useRenderCount` - Tracks how many times a component renders
+- `useDebugState` - Monitors state changes
+- `useDebugFunction` - Logs function calls with arguments
+- `useDebugPerformance` - Measures component mount time
+
+## Data Management
+
+The application uses JSON files for data storage:
+
+- `public/data/users.json` - User data
+- `public/data/documents.json` - Document data
+- `public/data/tasks.json` - Task data
+
+In a production environment, these would be replaced with API calls to a backend service.
+
 ## Learn More
 
 To learn more about the technologies used:
@@ -171,9 +275,118 @@ To learn more about the technologies used:
 - [Next.js Documentation](https://nextjs.org/docs)
 - [TypeScript Documentation](https://www.typescriptlang.org/docs/)
 - [Bootstrap Documentation](https://getbootstrap.com/docs)
+- [dnd-kit Documentation](https://docs.dndkit.com/)
 
 ## Deployment
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+
+## Development Commands
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
+
+# Open Cypress test runner
+npm run cypress:open
+
+# Run tests in headless mode
+npm run cypress:run
+
+# Run tests as part of the test script
+npm test
+```
+
+## API Mocking with MirageJS
+
+This project uses MirageJS for API mocking during development. MirageJS intercepts HTTP requests and provides realistic mock data, allowing you to develop and test features without a backend.
+
+### Features
+
+- Realistic mock data generation
+- API endpoint simulation
+- Development environment only (disabled in production)
+- Seamless integration with existing code
+- Easy to extend with new endpoints
+
+### How It Works
+
+MirageJS is automatically initialized when running in development mode (`npm run dev`). It intercepts all HTTP requests to `/api/*` endpoints and responds with mock data.
+
+The mock server is configured in `mirage/server.ts` and includes:
+
+- Models for users, documents, tasks, and subtasks
+- Factories for generating realistic mock data
+- Seeded data from existing JSON files
+- Full CRUD operations for all entities
+- Authentication endpoints
+- Dashboard statistics endpoints
+
+### API Documentation
+
+Comprehensive API documentation is available in two formats:
+
+1. **JSDoc Annotations** - Inline documentation in the MirageJS server code (`mirage/server.ts`)
+2. **OpenAPI Specification** - Standalone OpenAPI 3.0 YAML file (`openapi.yaml`)
+
+See [`docs/API.md`](docs/API.md) for detailed information on how to use and extend the API documentation.
+
+### Validating the OpenAPI Specification
+
+To validate the OpenAPI specification:
+
+```bash
+npm run validate:openapi
+```
+
+### Extending MirageJS
+
+To add new endpoints or modify existing ones:
+
+1. Edit `mirage/server.ts`
+2. Add new models in the `models` section
+3. Add new factories in the `factories` section
+4. Add new routes in the `routes()` method
+5. Document endpoints with JSDoc annotations
+6. Update `openapi.yaml` with new endpoints and schemas
+7. Restart the development server
+
+### Using in Components
+
+Components automatically use MirageJS in development and fall back to static JSON files in production. No code changes are needed in your components.
+
+Test files are located in the `cypress/e2e` directory with the following structure:
+
+```
+cypress/
+├── e2e/
+│   ├── login.cy.ts          # Login page tests
+│   ├── dashboard.cy.ts      # Dashboard tests
+│   ├── users.cy.ts          # User management tests
+│   ├── documents.cy.ts      # Document management tests
+│   ├── tasks.cy.ts          # Task management tests
+│   └── settings.cy.ts       # Settings page tests
+├── fixtures/                # Test data fixtures
+├── support/                 # Custom commands and configuration
+└── tsconfig.json           # TypeScript configuration for Cypress
+```
+
+### Writing Tests
+
+To create new tests:
+
+1. Add a new file in `cypress/e2e/` with the `.cy.ts` extension
+2. Use the `cy.login()` custom command to authenticate before tests
+3. Write tests using Cypress best practices
+4. Run tests using `npm run cypress:open` or `npm test`

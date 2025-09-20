@@ -3,11 +3,25 @@ import Head from 'next/head';
 import Sidebar from '../../components/layout/Sidebar';
 import { ProtectedRoute } from '../../components/auth';
 import { Loading } from '../../components/ui';
+import { DebugPanel, useDebug, useRenderCount, useDebugState } from '../../components/debug';
 import { Menu, Save, User, Shield, Bell, Database } from 'lucide-react';
 
 export default function SettingsPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [loading] = useState(false); // For consistency with other pages
+  
+  const { debugInfo, setDebugInfo, isDebugEnabled } = useDebug();
+  const renderCount = useRenderCount('SettingsPage');
+  const debugMobileMenuOpen = useDebugState(isMobileMenuOpen, 'settings_mobileMenuOpen');
+
+  // Set some debug info for the settings page
+  React.useEffect(() => {
+    setDebugInfo('settingsPage', {
+      isMobileMenuOpen,
+      loading,
+      timestamp: new Date().toISOString()
+    });
+  }, [isMobileMenuOpen, loading, setDebugInfo]);
 
   if (loading) {
     return (
@@ -146,6 +160,13 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+      
+      {isDebugEnabled && (
+        <DebugPanel 
+          debugInfo={debugInfo} 
+          isOpen={false}
+        />
+      )}
     </ProtectedRoute>
   );
 }

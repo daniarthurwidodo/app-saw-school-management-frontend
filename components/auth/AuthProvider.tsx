@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useDebug } from '../../components/debug';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -16,36 +17,112 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { setDebugInfo } = useDebug();
 
   // Check if user is already logged in on initial load
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     if (token) {
       setIsAuthenticated(true);
+      setDebugInfo('auth', { 
+        status: 'authenticated', 
+        token: token.substring(0, 10) + '...',
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      setDebugInfo('auth', { 
+        status: 'not_authenticated', 
+        timestamp: new Date().toISOString()
+      });
     }
     setIsLoading(false);
-  }, []);
+  }, [setDebugInfo]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // In a real application, you would call an authentication API here
-    // For this demo, we'll simulate an API call
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Simple validation for demo purposes
-        if (email && password) {
-          localStorage.setItem('authToken', 'demo-token');
+    // Use MirageJS API in development, mock in production
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          localStorage.setItem('authToken', data.token);
           setIsAuthenticated(true);
-          resolve(true);
+          setDebugInfo('auth_login_success', { 
+            email, 
+            user: data.user,
+            timestamp: new Date().toISOString()
+          });
+          return true;
         } else {
-          resolve(false);
+          setDebugInfo('auth_login_failed', { 
+            email, 
+            reason: data.error,
+            timestamp: new Date().toISOString()
+          });
+          return false;
         }
-      }, 1000);
-    });
+      } catch (error) {
+        console.error('Login error:', error);
+        setDebugInfo('auth_login_error', { 
+          email, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+        return false;
+      }
+    } else {
+      // Simple validation for demo purposes
+      setDebugInfo('auth_login_attempt', { 
+        email, 
+        timestamp: new Date().toISOString()
+      });
+      
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          // Simple validation for demo purposes
+          if (email && password) {
+            localStorage.setItem('authToken', 'demo-token');
+            setIsAuthenticated(true);
+            setDebugInfo('auth_login_success', { 
+              email, 
+              timestamp: new Date().toISOString()
+            });
+            resolve(true);
+          } else {
+            setDebugInfo('auth_login_failed', { 
+              email, 
+              reason: 'Invalid credentials',
+              timestamp: new Date().toISOString()
+            });
+            resolve(false);
+          }
+        }, 1000);
+      });
+    }
   };
 
   const logout = () => {
     localStorage.removeItem('authToken');
     setIsAuthenticated(false);
+    setDebugInfo('auth_logout', { 
+      timestamp: new Date().toISOString()
+    });
+    
+    // Use MirageJS API in development
+    if (process.env.NODE_ENV === 'development') {
+      fetch('/api/auth/logout', {
+        method: 'POST',
+      }).catch(console.error);
+    }
+    
     // Redirect to login page
     window.location.href = '/';
   };

@@ -13,7 +13,11 @@
       "createdDate": "2024-09-15",
       "dueDate": "2024-10-15",
       "estimatedHours": 40,
-      "labels": ["backend", "database", "urgent"],
+      "labels": [
+        "backend",
+        "database",
+        "urgent"
+      ],
       "subtasks": [
         {
           "id": "subtask-1-1",
@@ -59,7 +63,10 @@
       "createdDate": "2024-09-10",
       "dueDate": "2024-10-30",
       "estimatedHours": 60,
-      "labels": ["frontend", "reporting"],
+      "labels": [
+        "frontend",
+        "reporting"
+      ],
       "subtasks": [
         {
           "id": "subtask-2-1",
@@ -75,7 +82,7 @@
           "id": "subtask-2-2",
           "title": "Implement grade calculation logic",
           "description": "Build weighted grade calculation system with different assessment types",
-          "status": "in_progress",
+          "status": "todo",
           "assignee": "Michael Davis",
           "assigneeId": 3,
           "estimatedHours": 20,
@@ -107,7 +114,11 @@
       "completedDate": "2024-09-18",
       "estimatedHours": 32,
       "actualHours": 30,
-      "labels": ["mobile", "security", "authentication"],
+      "labels": [
+        "mobile",
+        "security",
+        "authentication"
+      ],
       "subtasks": [
         {
           "id": "subtask-3-1",
@@ -157,7 +168,11 @@
       "createdDate": "2024-09-20",
       "dueDate": "2024-11-15",
       "estimatedHours": 45,
-      "labels": ["mobile", "qr-code", "automation"],
+      "labels": [
+        "mobile",
+        "qr-code",
+        "automation"
+      ],
       "subtasks": [
         {
           "id": "subtask-4-1",
@@ -201,7 +216,11 @@
       "createdDate": "2024-09-08",
       "dueDate": "2024-12-01",
       "estimatedHours": 55,
-      "labels": ["communication", "portal", "parents"],
+      "labels": [
+        "communication",
+        "portal",
+        "parents"
+      ],
       "subtasks": [
         {
           "id": "subtask-5-1",
@@ -234,19 +253,35 @@
           "estimatedHours": 15
         }
       ]
+    },
+    {
+      "id": "task-6",
+      "title": "Test Task from API",
+      "description": "This is a test task created via API",
+      "status": "todo",
+      "priority": "high",
+      "assignee": "Unassigned",
+      "assigneeId": 1,
+      "reporter": "System",
+      "reporterId": 99,
+      "createdDate": "2025-09-20",
+      "dueDate": "2025-09-27",
+      "estimatedHours": 5,
+      "labels": [],
+      "subtasks": []
     }
   ],
   "summary": {
-    "totalTasks": 5,
+    "totalTasks": 6,
     "totalSubtasks": 15,
     "byStatus": {
       "todo": {
-        "tasks": 2,
-        "subtasks": 6
+        "tasks": 3,
+        "subtasks": 7
       },
       "in_progress": {
         "tasks": 2,
-        "subtasks": 3
+        "subtasks": 2
       },
       "done": {
         "tasks": 1,
@@ -254,16 +289,24 @@
       }
     },
     "byPriority": {
-      "high": 2,
+      "high": 3,
       "medium": 2,
       "low": 1
     },
-    "totalEstimatedHours": 232,
-    "completedHours": 54
+    "totalEstimatedHours": 237,
+    "completedHours": 30
   },
   "settings": {
-    "statuses": ["todo", "in_progress", "done"],
-    "priorities": ["low", "medium", "high"],
+    "statuses": [
+      "todo",
+      "in_progress",
+      "done"
+    ],
+    "priorities": [
+      "low",
+      "medium",
+      "high"
+    ],
     "defaultStatus": "todo",
     "defaultPriority": "medium"
   }

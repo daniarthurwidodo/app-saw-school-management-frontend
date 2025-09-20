@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Button } from '../ui/Button';
+import { Button } from './Button';
+import { Input } from './input';
+import { Card, CardContent, CardHeader, CardTitle } from './Card';
 import { useAuth } from '../auth';
 
 export const Register: React.FC = () => {
@@ -57,102 +59,105 @@ export const Register: React.FC = () => {
 
   if (success) {
     return (
-      <div className="card">
-        <div className="card-body text-center">
-          <h3 className="card-title">Registration Successful!</h3>
-          <p className="card-text">You will be redirected to the dashboard shortly...</p>
-        </div>
-      </div>
+      <Card className="w-full max-w-md mx-auto">
+        <CardContent className="text-center pt-6">
+          <CardTitle className="mb-2">Registration Successful!</CardTitle>
+          <p className="text-muted-foreground">You will be redirected to the dashboard shortly...</p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="card">
-      <div className="card-body">
-        <h3 className="card-title text-center mb-4">Register</h3>
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle className="text-center">Register</CardTitle>
+      </CardHeader>
+      <CardContent>
         {error && (
-          <div className="alert alert-danger" role="alert">
+          <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md mb-4">
             {error}
           </div>
         )}
-        <form onSubmit={handleSubmit}>
-          <div className="row">
-            <div className="col-md-6 mb-3">
-              <label htmlFor="firstName" className="form-label">First Name</label>
-              <input
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="firstName" className="text-sm font-medium leading-none">First Name</label>
+              <Input
                 type="text"
-                className="form-control"
                 id="firstName"
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
                 required
+                placeholder="John"
               />
             </div>
-            <div className="col-md-6 mb-3">
-              <label htmlFor="lastName" className="form-label">Last Name</label>
-              <input
+            <div className="space-y-2">
+              <label htmlFor="lastName" className="text-sm font-medium leading-none">Last Name</label>
+              <Input
                 type="text"
-                className="form-control"
                 id="lastName"
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
                 required
+                placeholder="Doe"
               />
             </div>
           </div>
-          <div className="mb-3">
-            <label htmlFor="email" className="form-label">Email</label>
-            <input
+          <div className="space-y-2">
+            <label htmlFor="email" className="text-sm font-medium leading-none">Email</label>
+            <Input
               type="email"
-              className="form-control"
               id="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
               required
+              placeholder="john.doe@example.com"
             />
           </div>
-          <div className="mb-3">
-            <label htmlFor="password" className="form-label">Password</label>
-            <input
+          <div className="space-y-2">
+            <label htmlFor="password" className="text-sm font-medium leading-none">Password</label>
+            <Input
               type="password"
-              className="form-control"
               id="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
               required
+              placeholder="Enter your password"
             />
           </div>
-          <div className="mb-3">
-            <label htmlFor="confirmPassword" className="form-label">Confirm Password</label>
-            <input
+          <div className="space-y-2">
+            <label htmlFor="confirmPassword" className="text-sm font-medium leading-none">Confirm Password</label>
+            <Input
               type="password"
-              className="form-control"
               id="confirmPassword"
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
               required
+              placeholder="Confirm your password"
             />
           </div>
-          <div className="d-grid">
-            <Button 
-              type="submit" 
-              variant="primary" 
-              disabled={isLoading}
-            >
-              {isLoading ? 'Registering...' : 'Register'}
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            variant="default"
+            disabled={isLoading}
+            className="w-full"
+          >
+            {isLoading ? 'Registering...' : 'Register'}
+          </Button>
         </form>
-        <div className="text-center mt-3">
-          <Link href="/">Already have an account? Login</Link>
+        <div className="text-center mt-4">
+          <Link href="/" className="text-sm text-primary hover:underline">
+            Already have an account? Login
+          </Link>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

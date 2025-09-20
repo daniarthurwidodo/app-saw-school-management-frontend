@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { Card, Button, Loading } from '../../components/ui';
 import Sidebar from '../../components/layout/Sidebar';
 import { ProtectedRoute } from '../../components/auth';
+import { DebugPanel, useDebug, useRenderCount, useDebugState } from '../../components/debug';
 import {
   Search,
   Filter,
@@ -56,23 +57,39 @@ export default function Users() {
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(10);
   const [loading, setLoading] = useState(true);
+  
+  const { debugInfo, setDebugInfo, isDebugEnabled } = useDebug();
+  const renderCount = useRenderCount('UsersPage');
+  const debugCurrentPage = useDebugState(currentPage, 'users_currentPage');
+  const debugSearchTerm = useDebugState(searchTerm, 'users_searchTerm');
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch('/data/users.json');
-        const data: UsersData = await response.json();
-        setUsers(data.users);
-        setFilteredUsers(data.users);
+        // Use MirageJS API in development, static JSON in production
+        const response = process.env.NODE_ENV === 'development' 
+          ? await fetch('/api/users')
+          : await fetch('/data/users.json');
+        
+        if (process.env.NODE_ENV === 'development') {
+          const data = await response.json();
+          setUsers(data.users || data);
+        } else {
+          const data = await response.json();
+          setUsers(data.users);
+        }
+        
+        setDebugInfo('usersData', process.env.NODE_ENV === 'development' ? 'From MirageJS API' : 'From static JSON');
         setLoading(false);
       } catch (error) {
         console.error('Error fetching users:', error);
+        setDebugInfo('usersError', error.message);
         setLoading(false);
       }
     };
 
     fetchUsers();
-  }, []);
+  }, [setDebugInfo]);
 
   useEffect(() => {
     let filtered = users;
@@ -98,7 +115,16 @@ export default function Users() {
 
     setFilteredUsers(filtered);
     setCurrentPage(1);
-  }, [searchTerm, roleFilter, statusFilter, users]);
+    
+    // Update debug info
+    setDebugInfo('usersFilter', {
+      searchTerm,
+      roleFilter,
+      statusFilter,
+      filteredCount: filtered.length,
+      totalCount: users.length
+    });
+  }, [searchTerm, roleFilter, statusFilter, users, setDebugInfo]);
 
   // Pagination
   const indexOfLastUser = currentPage * usersPerPage;
@@ -405,6 +431,13 @@ export default function Users() {
           </div>
         </div>
       </div>
+      
+      {isDebugEnabled && (
+        <DebugPanel 
+          debugInfo={debugInfo} 
+          isOpen={false}
+        />
+      )}
     </ProtectedRoute>
   );
 }

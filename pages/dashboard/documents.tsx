@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { Card, Loading } from '../../components/ui';
 import Sidebar from '../../components/layout/Sidebar';
 import { ProtectedRoute } from '../../components/auth';
+import { DebugPanel, useDebug, useRenderCount, useDebugState } from '../../components/debug';
 import {
   Search,
   Filter,
@@ -57,6 +58,11 @@ export default function DocumentsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
+  
+  const { debugInfo, setDebugInfo, isDebugEnabled } = useDebug();
+  const renderCount = useRenderCount('DocumentsPage');
+  const debugCurrentPage = useDebugState(currentPage, 'documents_currentPage');
+  const debugSearchTerm = useDebugState(searchTerm, 'documents_searchTerm');
 
   useEffect(() => {
     fetchDocuments();
@@ -64,12 +70,40 @@ export default function DocumentsPage() {
 
   const fetchDocuments = async () => {
     try {
-      const response = await fetch('/data/documents.json');
-      const data: DocumentsData = await response.json();
-      setDocuments(data.documents);
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.append('page', currentPage.toString());
+      params.append('limit', itemsPerPage.toString());
+      
+      if (searchTerm) params.append('search', searchTerm);
+      if (categoryFilter !== 'all') params.append('category', categoryFilter);
+      if (typeFilter !== 'all') params.append('type', typeFilter);
+      if (statusFilter !== 'all') params.append('status', statusFilter);
+      
+      // Use MirageJS API in development, static JSON in production
+      const url = process.env.NODE_ENV === 'development' 
+        ? `/api/documents?${params.toString()}`
+        : '/data/documents.json';
+      
+      const response = await fetch(url);
+      
+      if (process.env.NODE_ENV === 'development') {
+        const data = await response.json();
+        setDocuments(data.documents || data);
+        // Pagination data is in the response
+        if (data.pagination) {
+          // Handle pagination if needed
+        }
+      } else {
+        const data: DocumentsData = await response.json();
+        setDocuments(data.documents);
+      }
+      
+      setDebugInfo('documentsData', process.env.NODE_ENV === 'development' ? 'From MirageJS API' : 'From static JSON');
       setLoading(false);
     } catch (error) {
       console.error('Error fetching documents:', error);
+      setDebugInfo('documentsError', error.message);
       setLoading(false);
     }
   };
@@ -86,6 +120,18 @@ export default function DocumentsPage() {
     
     return matchesSearch && matchesCategory && matchesType && matchesStatus;
   });
+
+  // Update debug info when filters change
+  useEffect(() => {
+    setDebugInfo('documentsFilter', {
+      searchTerm,
+      categoryFilter,
+      typeFilter,
+      statusFilter,
+      filteredCount: filteredDocuments.length,
+      totalCount: documents.length
+    });
+  }, [searchTerm, categoryFilter, typeFilter, statusFilter, filteredDocuments.length, documents.length, setDebugInfo]);
 
   // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -400,6 +446,13 @@ export default function DocumentsPage() {
           </div>
         </div>
       </div>
+      
+      {isDebugEnabled && (
+        <DebugPanel 
+          debugInfo={debugInfo} 
+          isOpen={false}
+        />
+      )}
     </ProtectedRoute>
   );
 }

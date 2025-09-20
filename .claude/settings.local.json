@@ -4,7 +4,11 @@
       "Bash(npm run build:*)",
       "Bash(npm run lint)",
       "Bash(npm install:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "WebFetch(domain:codepen.io)",
+      "Bash(curl:*)",
+      "Bash(find:*)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [],
     "ask": []
