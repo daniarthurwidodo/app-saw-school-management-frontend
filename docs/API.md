@@ -73,8 +73,8 @@ To import the API specification into Postman:
 The API includes the following endpoint groups:
 
 ### Authentication
-- `POST /api/auth/login` - Authenticate user
-- `POST /api/auth/logout` - Logout user
+- **Demo Mode**: Authentication is handled client-side for demonstration purposes
+- No API endpoints - uses localStorage for token management
 
 ### Users
 - `GET /api/users` - Get all users

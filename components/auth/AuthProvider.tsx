@@ -39,90 +39,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [setDebugInfo]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Use MirageJS API in development, mock in production
-    if (process.env.NODE_ENV === 'development') {
-      try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email, password }),
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-          localStorage.setItem('authToken', data.token);
+    // Simple demo authentication - no API calls
+    setDebugInfo('auth_login_attempt', {
+      email,
+      timestamp: new Date().toISOString()
+    });
+
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Simple validation for demo purposes
+        if (email && password) {
+          localStorage.setItem('authToken', 'demo-token-' + Date.now());
           setIsAuthenticated(true);
-          setDebugInfo('auth_login_success', { 
-            email, 
-            user: data.user,
+          setDebugInfo('auth_login_success', {
+            email,
             timestamp: new Date().toISOString()
           });
-          return true;
+          resolve(true);
         } else {
-          setDebugInfo('auth_login_failed', { 
-            email, 
-            reason: data.error,
+          setDebugInfo('auth_login_failed', {
+            email,
+            reason: 'Invalid credentials',
             timestamp: new Date().toISOString()
           });
-          return false;
+          resolve(false);
         }
-      } catch (error) {
-        console.error('Login error:', error);
-        setDebugInfo('auth_login_error', { 
-          email, 
-          error: error.message,
-          timestamp: new Date().toISOString()
-        });
-        return false;
-      }
-    } else {
-      // Simple validation for demo purposes
-      setDebugInfo('auth_login_attempt', { 
-        email, 
-        timestamp: new Date().toISOString()
-      });
-      
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          // Simple validation for demo purposes
-          if (email && password) {
-            localStorage.setItem('authToken', 'demo-token');
-            setIsAuthenticated(true);
-            setDebugInfo('auth_login_success', { 
-              email, 
-              timestamp: new Date().toISOString()
-            });
-            resolve(true);
-          } else {
-            setDebugInfo('auth_login_failed', { 
-              email, 
-              reason: 'Invalid credentials',
-              timestamp: new Date().toISOString()
-            });
-            resolve(false);
-          }
-        }, 1000);
-      });
-    }
+      }, 1000);
+    });
   };
 
   const logout = () => {
     localStorage.removeItem('authToken');
     setIsAuthenticated(false);
-    setDebugInfo('auth_logout', { 
+    setDebugInfo('auth_logout', {
       timestamp: new Date().toISOString()
     });
-    
-    // Use MirageJS API in development
-    if (process.env.NODE_ENV === 'development') {
-      fetch('/api/auth/logout', {
-        method: 'POST',
-      }).catch(console.error);
-    }
-    
+
     // Redirect to login page
     window.location.href = '/';
   };

@@ -66,16 +66,14 @@ export default function Dashboard() {
     // Simulate fetching dashboard data
     const fetchData = async () => {
       try {
-        if (process.env.NODE_ENV === 'development') {
-          // Use MirageJS API in development
-          const response = await fetch('/api/dashboard/stats');
-          const data = await response.json();
+        // Always use static data
+        setTimeout(() => {
           setSummary({
-            totalUsers: data.totalUsers,
-            totalDocuments: data.totalDocuments,
-            totalTasks: data.totalTasks,
-            activeTasks: data.activeTasks,
-            completedTasks: data.completedTasks,
+            totalUsers: 142,
+            totalDocuments: 56,
+            totalTasks: 89,
+            activeTasks: 23,
+            completedTasks: 66,
             upcomingEvents: 5,
             recentActivity: [
               { id: 1, user: "John Smith", action: "uploaded", target: "Student Handbook", time: "2 hours ago" },
@@ -85,27 +83,8 @@ export default function Dashboard() {
               { id: 5, user: "Robert Green", action: "created", target: "Budget Proposal", time: "2 days ago" }
             ]
           });
-        } else {
-          // Use static data in production
-          setTimeout(() => {
-            setSummary({
-              totalUsers: 142,
-              totalDocuments: 56,
-              totalTasks: 89,
-              activeTasks: 23,
-              completedTasks: 66,
-              upcomingEvents: 5,
-              recentActivity: [
-                { id: 1, user: "John Smith", action: "uploaded", target: "Student Handbook", time: "2 hours ago" },
-                { id: 2, user: "Sarah Wilson", action: "completed", target: "Grade Reports", time: "4 hours ago" },
-                { id: 3, user: "Michael Davis", action: "assigned", target: "Math Homework", time: "1 day ago" },
-                { id: 4, user: "Emily Johnson", action: "updated", target: "Class Schedule", time: "1 day ago" },
-                { id: 5, user: "Robert Green", action: "created", target: "Budget Proposal", time: "2 days ago" }
-              ]
-            });
-          }, 1000);
-        }
-        setDebugInfo('dashboardData', process.env.NODE_ENV === 'development' ? 'From MirageJS API' : 'From static data');
+        }, 800);
+        setDebugInfo('dashboardData', 'From static data');
         setLoading(false);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);

@@ -69,37 +69,20 @@ export default function DocumentsPage() {
   }, []);
 
   const fetchDocuments = async () => {
+    setLoading(true);
     try {
-      // Build query parameters
-      const params = new URLSearchParams();
-      params.append('page', currentPage.toString());
-      params.append('limit', itemsPerPage.toString());
-      
-      if (searchTerm) params.append('search', searchTerm);
-      if (categoryFilter !== 'all') params.append('category', categoryFilter);
-      if (typeFilter !== 'all') params.append('type', typeFilter);
-      if (statusFilter !== 'all') params.append('status', statusFilter);
-      
-      // Use MirageJS API in development, static JSON in production
-      const url = process.env.NODE_ENV === 'development' 
-        ? `/api/documents?${params.toString()}`
-        : '/data/documents.json';
-      
-      const response = await fetch(url);
-      
-      if (process.env.NODE_ENV === 'development') {
-        const data = await response.json();
-        setDocuments(data.documents || data);
-        // Pagination data is in the response
-        if (data.pagination) {
-          // Handle pagination if needed
-        }
-      } else {
-        const data: DocumentsData = await response.json();
-        setDocuments(data.documents);
+      // Always use static JSON data
+      const response = await fetch('/data/documents.json');
+
+      if (!response.ok) {
+        throw new Error(`Failed to load documents: ${response.status}`);
       }
-      
-      setDebugInfo('documentsData', process.env.NODE_ENV === 'development' ? 'From MirageJS API' : 'From static JSON');
+
+      const data: DocumentsData = await response.json();
+      setDocuments(data.documents);
+
+      setDebugInfo('documentsData', 'From static JSON');
+      setDebugInfo('documentsLoaded', data.documents.length);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching documents:', error);

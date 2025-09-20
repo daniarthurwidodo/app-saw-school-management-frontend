@@ -15,9 +15,10 @@ This is a Next.js TypeScript school management frontend with a modular component
 
 ### Authentication System
 - Uses React Context (`components/auth/AuthProvider.tsx`) for authentication state
-- Token-based authentication with localStorage persistence
+- **Demo Mode**: Client-side authentication with localStorage persistence (no API calls)
 - `useAuth` hook provides `isAuthenticated`, `login()`, and `logout()` methods
 - `ProtectedRoute` component wraps pages requiring authentication
+- Accepts any email/password combination for demonstration purposes
 
 ### Component Structure
 - **`components/auth/`** - Authentication context and protected route components

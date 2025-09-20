@@ -66,20 +66,12 @@ export default function Users() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        // Use MirageJS API in development, static JSON in production
-        const response = process.env.NODE_ENV === 'development' 
-          ? await fetch('/api/users')
-          : await fetch('/data/users.json');
+        // Always use static JSON data
+        const response = await fetch('/data/users.json');
+        const data = await response.json();
+        setUsers(data.users);
         
-        if (process.env.NODE_ENV === 'development') {
-          const data = await response.json();
-          setUsers(data.users || data);
-        } else {
-          const data = await response.json();
-          setUsers(data.users);
-        }
-        
-        setDebugInfo('usersData', process.env.NODE_ENV === 'development' ? 'From MirageJS API' : 'From static JSON');
+        setDebugInfo('usersData', 'From static JSON');
         setLoading(false);
       } catch (error) {
         console.error('Error fetching users:', error);
@@ -276,7 +268,7 @@ export default function Users() {
                 <div className="col-12">
                   <div className="d-flex justify-content-between align-items-center">
                     <h5 className="mb-0 text-muted">Users</h5>
-                    <Button variant="primary" className="btn-sm">
+                    <Button variant="default" className="btn-sm">
                       <Plus size={16} className="me-1" />
                       Add User
                     </Button>

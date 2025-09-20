@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, ReactNode } from 'react';
 
 // Utility function to move items in an array
 function arrayMove<T>(array: T[], oldIndex: number, newIndex: number): T[] {
@@ -326,32 +326,11 @@ export const KanbanProvider: React.FC<KanbanProviderProps> = ({ children }) => {
 
   const updateTaskStatus = async (taskId: string, newStatus: 'todo' | 'in_progress' | 'done', isSubtask?: boolean, parentTaskId?: string) => {
     try {
-      if (isSubtask && parentTaskId) {
-        // Update subtask status
-        const response = await fetch(`/api/tasks/${parentTaskId}/subtasks/${taskId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            status: newStatus,
-            ...(newStatus === 'in_progress' && { startedDate: new Date().toISOString().split('T')[0] }),
-            ...(newStatus === 'done' && { completedDate: new Date().toISOString().split('T')[0] })
-          })
-        });
+      // Simulate API call with local state update only
+      console.log(`Simulating API call: Update ${isSubtask ? 'subtask' : 'task'} ${taskId} status to ${newStatus}`);
 
-        if (!response.ok) throw new Error('Failed to update subtask status');
-      } else {
-        // Update task status
-        const response = await fetch(`/api/tasks/${taskId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            status: newStatus,
-            ...(newStatus === 'done' && { completedDate: new Date().toISOString().split('T')[0] })
-          })
-        });
-
-        if (!response.ok) throw new Error('Failed to update task status');
-      }
+      // Add a small delay to simulate network request
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Update local state
       dispatch({ type: 'UPDATE_TASK_STATUS', payload: { taskId, newStatus, isSubtask, parentTaskId } });
@@ -363,15 +342,18 @@ export const KanbanProvider: React.FC<KanbanProviderProps> = ({ children }) => {
 
   const addTask = async (task: Omit<Task, 'id' | 'createdDate'>): Promise<Task> => {
     try {
-      const response = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(task)
-      });
+      console.log('Simulating API call: Create new task', task);
 
-      if (!response.ok) throw new Error('Failed to create task');
+      // Add a small delay to simulate network request
+      await new Promise(resolve => setTimeout(resolve, 200));
 
-      const newTask = await response.json();
+      // Create new task with generated ID and current date
+      const newTask: Task = {
+        ...task,
+        id: `task-${Date.now()}`,
+        createdDate: new Date().toISOString().split('T')[0]
+      };
+
       dispatch({ type: 'ADD_TASK', payload: newTask });
       return newTask;
     } catch (error) {
@@ -382,15 +364,17 @@ export const KanbanProvider: React.FC<KanbanProviderProps> = ({ children }) => {
 
   const addSubtask = async (parentTaskId: string, subtask: Omit<Subtask, 'id'>) => {
     try {
-      const response = await fetch(`/api/tasks/${parentTaskId}/subtasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(subtask)
-      });
+      console.log('Simulating API call: Create new subtask', subtask);
 
-      if (!response.ok) throw new Error('Failed to create subtask');
+      // Add a small delay to simulate network request
+      await new Promise(resolve => setTimeout(resolve, 200));
 
-      const newSubtask = await response.json();
+      // Create new subtask with generated ID
+      const newSubtask: Subtask = {
+        ...subtask,
+        id: `${parentTaskId}-sub-${Date.now()}`
+      };
+
       dispatch({ type: 'ADD_SUBTASK', payload: { parentTaskId, subtask: newSubtask } });
     } catch (error) {
       console.error('Error creating subtask:', error);
@@ -398,49 +382,59 @@ export const KanbanProvider: React.FC<KanbanProviderProps> = ({ children }) => {
     }
   };
 
-  const updateTask = async (taskId: string, updates: Partial<Task>) => {
+  const updateTask = useCallback(async (taskId: string, updates: Partial<Task>) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
-      });
+      console.log('Simulating API call: Update task', taskId, updates);
 
-      if (!response.ok) throw new Error('Failed to update task');
+      // Add a small delay to simulate network request
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-      const updatedTask = await response.json();
+      // Find the task and apply updates
+      const updatedTask = {
+        ...state.tasks.find(task => task.id === taskId),
+        ...updates
+      };
+
       dispatch({ type: 'UPDATE_TASK', payload: updatedTask });
     } catch (error) {
       console.error('Error updating task:', error);
       throw error;
     }
-  };
+  }, [state.tasks]);
 
-  const updateSubtask = async (parentTaskId: string, subtaskId: string, updates: Partial<Subtask>) => {
+  const updateSubtask = useCallback(async (parentTaskId: string, subtaskId: string, updates: Partial<Subtask>) => {
     try {
-      const response = await fetch(`/api/tasks/${parentTaskId}/subtasks/${subtaskId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
-      });
+      console.log('Simulating API call: Update subtask', subtaskId, updates);
 
-      if (!response.ok) throw new Error('Failed to update subtask');
+      // Add a small delay to simulate network request
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-      const updatedSubtask = await response.json();
+      // Find the subtask and apply updates
+      const parentTask = state.tasks.find(task => task.id === parentTaskId);
+      const subtask = parentTask?.subtasks.find(st => st.id === subtaskId);
+
+      if (!subtask) {
+        throw new Error('Subtask not found');
+      }
+
+      const updatedSubtask = {
+        ...subtask,
+        ...updates
+      };
+
       dispatch({ type: 'UPDATE_SUBTASK', payload: { parentTaskId, subtask: updatedSubtask } });
     } catch (error) {
       console.error('Error updating subtask:', error);
       throw error;
     }
-  };
+  }, [state.tasks]);
 
   const deleteTask = async (taskId: string) => {
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'DELETE'
-      });
+      console.log('Simulating API call: Delete task', taskId);
 
-      if (!response.ok) throw new Error('Failed to delete task');
+      // Add a small delay to simulate network request
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       dispatch({ type: 'DELETE_TASK', payload: taskId });
     } catch (error) {
@@ -451,11 +445,10 @@ export const KanbanProvider: React.FC<KanbanProviderProps> = ({ children }) => {
 
   const deleteSubtask = async (parentTaskId: string, subtaskId: string) => {
     try {
-      const response = await fetch(`/api/tasks/${parentTaskId}/subtasks/${subtaskId}`, {
-        method: 'DELETE'
-      });
+      console.log('Simulating API call: Delete subtask', subtaskId);
 
-      if (!response.ok) throw new Error('Failed to delete subtask');
+      // Add a small delay to simulate network request
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       dispatch({ type: 'DELETE_SUBTASK', payload: { parentTaskId, subtaskId } });
     } catch (error) {

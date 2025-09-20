@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Head from 'next/head';
 import { Card, Button, Loading } from '../../components/ui';
 import Sidebar from '../../components/layout/Sidebar';
@@ -7,10 +7,8 @@ import { DebugPanel, useDebug } from '../../components/debug';
 import { KanbanProvider, useKanban } from '../../components/kanban';
 import { draggable, dropTargetForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 import { dropTargetForExternal } from '@atlaskit/pragmatic-drag-and-drop/external/adapter';
-import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
 import { setCustomNativeDragPreview } from '@atlaskit/pragmatic-drag-and-drop/element/set-custom-native-drag-preview';
 import { attachClosestEdge, extractClosestEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge';
-import { reorderWithEdge } from '@atlaskit/pragmatic-drag-and-drop-hitbox/reorder-with-edge';
 import {
   Plus,
   Filter,
@@ -110,90 +108,47 @@ function TasksPageContent() {
   // Drag state management for pragmatic-drag-and-drop
   const [draggedItem, setDraggedItem] = useState<{ type: 'task' | 'subtask'; id: string; parentId?: string } | null>(null);
 
-  useEffect(() => {
-    fetchTasks();
-  }, [searchTerm, priorityFilter, assigneeFilter]);
-
-
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     setLoading(true);
     try {
-      // Build query parameters
-      const params = new URLSearchParams();
-      if (searchTerm) params.append('search', searchTerm);
-      if (priorityFilter !== 'all') params.append('priority', priorityFilter);
-      if (assigneeFilter !== 'all') params.append('assignee', assigneeFilter);
-
-      const apiUrl = `/api/tasks?${params.toString()}`;
-      console.log('Fetching tasks from API:', apiUrl);
-      setDebugInfo('apiRequest', apiUrl);
-
-      const response = await fetch(apiUrl);
+      // Always use static JSON data
+      console.log('Using static data: /data/tasks.json');
+      const response = await fetch('/data/tasks.json?t=' + Date.now()); // Add cache buster
 
       if (!response.ok) {
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+        throw new Error(`Failed to load tasks: ${response.status}`);
       }
 
-      const data = await response.json();
-      console.log('API response received:', data);
+      const data: TasksData = await response.json();
+      console.log('Static data loaded:', data);
 
       setTasks(data.tasks);
 
       // Initialize task order based on current task statuses
       const initialOrder = {
-        todo: data.tasks.filter((t: any) => t.status === 'todo').map((t: any) => t.id),
-        in_progress: data.tasks.filter((t: any) => t.status === 'in_progress').map((t: any) => t.id),
-        done: data.tasks.filter((t: any) => t.status === 'done').map((t: any) => t.id)
+        todo: data.tasks.filter(t => t.status === 'todo').map(t => t.id),
+        in_progress: data.tasks.filter(t => t.status === 'in_progress').map(t => t.id),
+        done: data.tasks.filter(t => t.status === 'done').map(t => t.id)
       };
       setTaskOrder(initialOrder);
 
-      setDebugInfo('apiSuccess', {
-        totalCount: data.totalCount,
-        filteredCount: data.filteredCount,
-        summary: data.summary,
-        tasksLoaded: data.tasks.length
+      setDebugInfo('dataSuccess', {
+        tasksLoaded: data.tasks.length,
+        source: 'static JSON'
       });
-      setDebugInfo('dataSource', 'API');
+      setDebugInfo('dataSource', 'Static JSON');
       setLoading(false);
     } catch (error) {
-      console.error('API request failed, falling back to static JSON:', error);
-      setDebugInfo('apiError', error.message);
-
-      // Fallback to static JSON if API fails
-      try {
-        console.log('Using fallback: /data/tasks.json');
-        const fallbackResponse = await fetch('/data/tasks.json?t=' + Date.now()); // Add cache buster
-
-        if (!fallbackResponse.ok) {
-          throw new Error(`Fallback request failed: ${fallbackResponse.status}`);
-        }
-
-        const fallbackData: TasksData = await fallbackResponse.json();
-        console.log('Fallback data loaded:', fallbackData);
-
-        setTasks(fallbackData.tasks);
-
-        const initialOrder = {
-          todo: fallbackData.tasks.filter(t => t.status === 'todo').map(t => t.id),
-          in_progress: fallbackData.tasks.filter(t => t.status === 'in_progress').map(t => t.id),
-          done: fallbackData.tasks.filter(t => t.status === 'done').map(t => t.id)
-        };
-        setTaskOrder(initialOrder);
-
-        setDebugInfo('fallbackSuccess', {
-          tasksLoaded: fallbackData.tasks.length,
-          source: 'static JSON'
-        });
-        setDebugInfo('dataSource', 'Static JSON (API failed)');
-        setLoading(false);
-      } catch (fallbackError) {
-        console.error('Fallback also failed:', fallbackError);
-        setDebugInfo('fallbackError', fallbackError.message);
-        setDebugInfo('dataSource', 'Failed to load');
-        setLoading(false);
-      }
+      console.error('Failed to load static data:', error);
+      setDebugInfo('dataError', error.message);
+      setDebugInfo('dataSource', 'Failed to load');
+      setLoading(false);
     }
-  };
+  }, [setDebugInfo, setLoading, setTaskOrder, setTasks]);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [searchTerm, priorityFilter, assigneeFilter, fetchTasks]);
 
   const handleUpdateTaskStatus = async (taskId: string, newStatus: 'todo' | 'in_progress' | 'done', isSubtask = false, parentTaskId?: string) => {
     console.log('UpdateTaskStatus called:', { taskId, newStatus, isSubtask, parentTaskId });
@@ -548,19 +503,19 @@ function TasksPageContent() {
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
-      case 'high': return <Flag className="text-danger" size={14} />;
-      case 'medium': return <Flag className="text-warning" size={14} />;
-      case 'low': return <Flag className="text-success" size={14} />;
-      default: return <Flag className="text-muted" size={14} />;
+      case 'high': return <Flag className="text-danger" size={16} />;
+      case 'medium': return <Flag className="text-warning" size={16} />;
+      case 'low': return <Flag className="text-success" size={16} />;
+      default: return <Flag className="text-muted" size={16} />;
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'done': return <CheckCircle className="text-success" size={16} />;
-      case 'in_progress': return <AlertCircle className="text-warning" size={16} />;
-      case 'todo': return <Circle className="text-muted" size={16} />;
-      default: return <Circle className="text-muted" size={16} />;
+      case 'done': return <CheckCircle className="text-success" size={18} />;
+      case 'in_progress': return <AlertCircle className="text-warning" size={18} />;
+      case 'todo': return <Circle className="text-muted" size={18} />;
+      default: return <Circle className="text-muted" size={18} />;
     }
   };
 
@@ -653,73 +608,87 @@ function TasksPageContent() {
       });
     }, [task.id]);
 
+    // Calculate progress percentage
+    const progressPercentage = task.subtasks.length > 0 
+      ? (task.subtasks.filter(st => st.status === 'done').length / task.subtasks.length) * 100 
+      : 0;
+
     return (
       <div
         ref={cardRef}
-        className={`card task-card mb-3 ${isDragging ? 'dragging' : ''}`}
+        className={`task-card mb-4 ${isDragging ? 'dragging' : ''}`}
         data-task-id={task.id}
         onClick={(e) => handleTaskClick(task, e)}
-        style={{ opacity: isDragging ? 0.8 : 1 }}
+        style={{ opacity: isDragging ? 0.8 : 1, cursor: 'pointer' }}
       >
-
-        <div className="card-body p-3">
-        <div className="d-flex justify-content-between align-items-start mb-2">
-          <div className="d-flex align-items-center">
-            {getPriorityIcon(task.priority)}
-            <span className="ms-2 badge bg-secondary small">{task.id.split('-')[1]}</span>
+        <div className="card-body p-4">
+          {/* Header with priority and ID */}
+          <div className="d-flex justify-content-between align-items-start mb-3">
+            <div className="d-flex align-items-center">
+              {getPriorityIcon(task.priority)}
+              <span className="ms-2 badge bg-secondary small">TASK-{task.id.split('-')[1]}</span>
+            </div>
+            <button
+              className="btn btn-sm btn-outline-primary"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                console.log('Edit button clicked for task:', task.id);
+                e.stopPropagation();
+                setSelectedTask(task);
+                setSelectedSubtask(null);
+                setShowModal(true);
+              }}
+              id={`editButton-${task.id}`}
+            >
+              <Edit size={14} className="me-1" />
+              Edit
+            </button>
           </div>
-          <button
-            className="btn btn-sm btn-outline-primary"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              console.log('Edit button clicked for task:', task.id);
-              e.stopPropagation();
-              setSelectedTask(task);
-              setSelectedSubtask(null);
-              setShowModal(true);
-            }}
-            id={`editButton-${task.id}`}
-          >
-            <Edit size={14} className="me-1" />
-            Edit
-          </button>
-        </div>
 
-        <h6 className="card-title mb-2">{task.title}</h6>
-        <p className="card-text small text-muted mb-3">{task.description}</p>
+          {/* Task title and description */}
+          <h6 className="card-title mb-2 fw-bold">{task.title}</h6>
+          <p className="card-text small text-muted mb-3">{task.description}</p>
 
-        <div className="d-flex flex-wrap gap-1 mb-2">
-          {task.labels.map(label => (
-            <span key={label} className="badge bg-light text-dark small">{label}</span>
-          ))}
-        </div>
+          {/* Labels */}
+          {task.labels.length > 0 && (
+            <div className="d-flex flex-wrap gap-1 mb-3">
+              {task.labels.map(label => (
+                <span key={label} className="badge bg-light text-dark small px-2 py-1">
+                  {label}
+                </span>
+              ))}
+            </div>
+          )}
 
-        <div className="d-flex justify-content-between align-items-center small text-muted">
-          <div className="d-flex align-items-center">
-            <User size={12} className="me-1" />
-            <span>{task.assignee.split(' ')[0]}</span>
-          </div>
-          <div className="d-flex align-items-center">
-            <Calendar size={12} className="me-1" />
-            <span>{new Date(task.dueDate).toLocaleDateString()}</span>
-          </div>
-        </div>
-
-        {task.subtasks.length > 0 && (
-          <div className="mt-2">
-            <small className="text-muted">
-              {task.subtasks.filter(st => st.status === 'done').length}/{task.subtasks.length} subtasks
-            </small>
-            <div className="progress mt-1" style={{ height: '4px' }}>
-              <div
-                className="progress-bar"
-                style={{
-                  width: `${(task.subtasks.filter(st => st.status === 'done').length / task.subtasks.length) * 100}%`
-                }}
-              ></div>
+          {/* Assignee and due date */}
+          <div className="d-flex justify-content-between align-items-center small text-muted mb-3">
+            <div className="d-flex align-items-center">
+              <User size={14} className="me-1" />
+              <span>{task.assignee}</span>
+            </div>
+            <div className="d-flex align-items-center">
+              <Calendar size={14} className="me-1" />
+              <span>{new Date(task.dueDate).toLocaleDateString()}</span>
             </div>
           </div>
-        )}
+
+          {/* Progress bar for subtasks */}
+          {task.subtasks.length > 0 && (
+            <div className="mt-2">
+              <div className="d-flex justify-content-between small mb-1">
+                <span className="text-muted">Subtasks</span>
+                <span className="text-muted">
+                  {task.subtasks.filter(st => st.status === 'done').length}/{task.subtasks.length} completed
+                </span>
+              </div>
+              <div className="progress" style={{ height: '8px' }}>
+                <div
+                  className="progress-bar"
+                  style={{ width: `${progressPercentage}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -758,19 +727,16 @@ function TasksPageContent() {
     return (
       <div
         ref={cardRef}
-        className={`card subtask-card mb-2 ${isDragging ? 'dragging' : ''}`}
+        className={`subtask-card mb-3 ${isDragging ? 'dragging' : ''}`}
         data-task-id={subtask.id}
         onClick={handleSubtaskCardClick}
-        style={{ opacity: isDragging ? 0.8 : 1 }}
+        style={{ opacity: isDragging ? 0.8 : 1, cursor: 'pointer' }}
       >
-        <div
-          className="card-body p-2"
-          style={{ cursor: 'pointer' }}
-        >
-          <div className="d-flex justify-content-between align-items-start mb-1">
+        <div className="card-body p-3">
+          <div className="d-flex justify-content-between align-items-start mb-2">
             <div className="d-flex align-items-center">
               {getStatusIcon(subtask.status)}
-              <span className="ms-2 badge bg-light text-dark small">{subtask.id.split('-')[2]}</span>
+              <span className="ms-2 badge bg-light text-dark small">SUB-{subtask.id.split('-')[2]}</span>
             </div>
             <button
               className="btn btn-sm btn-outline-primary"
@@ -793,17 +759,19 @@ function TasksPageContent() {
           </div>
 
           <div>
-            <h6 className="card-title small mb-1">{subtask.title}</h6>
-            <p className="card-text small text-muted mb-2">{subtask.description}</p>
+            <h6 className="card-title small mb-1 fw-semibold">{subtask.title}</h6>
+            {subtask.description && (
+              <p className="card-text small text-muted mb-2">{subtask.description}</p>
+            )}
           </div>
 
           <div className="d-flex justify-content-between align-items-center small text-muted">
             <div className="d-flex align-items-center">
-              <User size={10} className="me-1" />
-              <span>{subtask.assignee.split(' ')[0]}</span>
+              <User size={12} className="me-1" />
+              <span>{subtask.assignee}</span>
             </div>
             <div className="d-flex align-items-center">
-              <Clock size={10} className="me-1" />
+              <Clock size={12} className="me-1" />
               <span>{subtask.estimatedHours}h</span>
             </div>
           </div>
@@ -812,21 +780,47 @@ function TasksPageContent() {
     );
   };
 
-  const DroppableKanbanColumn = ({
+    const DroppableKanbanColumn = ({
     title,
     status,
     tasks,
-    subtasks,
-    bgClass
+    subtasks
   }: {
     title: string;
     status: 'todo' | 'in_progress' | 'done';
     tasks: Task[];
     subtasks: (Subtask & { parentId: string })[];
-    bgClass: string;
   }) => {
     const [isOver, setIsOver] = useState(false);
     const columnRef = useRef<HTMLDivElement>(null);
+
+    // Get status-specific styling
+    const getColumnClass = () => {
+      switch (status) {
+        case 'todo':
+          return 'kanban-column todo';
+        case 'in_progress':
+          return 'kanban-column in-progress';
+        case 'done':
+          return 'kanban-column done';
+        default:
+          return 'kanban-column';
+      }
+    };
+
+    // Get status icon
+    const getStatusIcon = () => {
+      switch (status) {
+        case 'todo':
+          return <Circle className="text-muted" size={18} />;
+        case 'in_progress':
+          return <AlertCircle className="text-warning" size={18} />;
+        case 'done':
+          return <CheckCircle className="text-success" size={18} />;
+        default:
+          return <Circle className="text-muted" size={18} />;
+      }
+    };
 
     useEffect(() => {
       const element = columnRef.current;
@@ -848,13 +842,13 @@ function TasksPageContent() {
       <div className="kanban-column-wrapper">
         <div
           ref={columnRef}
-          className={`kanban-column h-100 ${bgClass} ${isOver ? 'drag-over' : ''}`}
+          className={`${getColumnClass()} h-100 ${isOver ? 'drag-over' : ''}`}
           data-column-id={status}
         >
           <div className="kanban-header p-3 border-bottom">
             <h5 className="mb-0 d-flex align-items-center">
-              {getStatusIcon(status)}
-              <span className="ms-2">{title}</span>
+              {getStatusIcon()}
+              <span className="ms-2 fw-semibold">{title}</span>
               <span className="badge bg-secondary ms-2">{tasks.length + subtasks.length}</span>
             </h5>
           </div>
@@ -869,9 +863,21 @@ function TasksPageContent() {
             ))}
 
             {tasks.length === 0 && subtasks.length === 0 && (
-              <div className="text-center text-muted py-4">
-                <Circle size={48} className="mb-2 opacity-50" />
-                <p className="mb-0">No {title.toLowerCase()} items</p>
+              <div className="text-center text-muted py-5">
+                <div className="mb-3">
+                  <Circle size={48} className="opacity-50 mx-auto" />
+                </div>
+                <h6 className="mb-1">No {title.toLowerCase()} items</h6>
+                <p className="small text-muted mb-0">Drag tasks here to {title.toLowerCase()}</p>
+                {status === 'todo' && (
+                  <button 
+                    className="btn btn-sm btn-outline-primary mt-3"
+                    onClick={openNewTaskModal}
+                  >
+                    <Plus size={14} className="me-1" />
+                    Create your first task
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -917,90 +923,19 @@ function TasksPageContent() {
               {/* Header Section */}
               <div className="dashboard-header mb-4">
                 <div className="row align-items-center">
-                  <div className="col-12">
+                  <div className="col-12 col-md-8">
                     <h1 className="dashboard-title mb-2">Task Board</h1>
                     <p className="dashboard-subtitle mb-0">
                       Manage and track project tasks and subtasks
                     </p>
                   </div>
-                </div>
-              </div>
-
-              {/* Filters */}
-              <div className="row mb-4">
-                <div className="col-12">
-                  <Card title="" className="filter-card">
-                    <div className="row g-3 align-items-center">
-                      <div className="col-12 col-lg-5">
-                        <div className="input-group">
-                          <button
-                            className="btn btn-outline-primary"
-                            onClick={() => {
-                              console.log('Manual refresh triggered');
-                              fetchTasks();
-                            }}
-                            title="Refresh data from server"
-                            disabled={loading}
-                          >
-                            🔄
-                          </button>
-                          <span className="input-group-text bg-light">
-                            <Search size={16} className="text-muted" />
-                          </span>
-                          <input
-                            type="text"
-                            className="form-control task-search-input"
-                            placeholder="Search tasks and subtasks..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                      <div className="col-6 col-md-4 col-lg-2">
-                        <select
-                          className="form-select"
-                          value={priorityFilter}
-                          onChange={(e) => setPriorityFilter(e.target.value)}
-                        >
-                          <option value="all">All Priorities</option>
-                          <option value="high">High Priority</option>
-                          <option value="medium">Medium Priority</option>
-                          <option value="low">Low Priority</option>
-                        </select>
-                      </div>
-                      <div className="col-6 col-md-4 col-lg-2">
-                        <select
-                          className="form-select"
-                          value={assigneeFilter}
-                          onChange={(e) => setAssigneeFilter(e.target.value)}
-                        >
-                          <option value="all">All Assignees</option>
-                          <option value="1">John Smith</option>
-                          <option value="3">Michael Davis</option>
-                          <option value="8">Ashley Anderson</option>
-                        </select>
-                      </div>
-                      <div className="col-12 col-md-4 col-lg-3">
-                        <div className="d-flex justify-content-md-end justify-content-start align-items-center">
-                          <div className="badge bg-light text-dark px-3 py-2">
-                            <strong>{filteredTasks.length}</strong> tasks • <strong>{filteredTasks.reduce((acc, task) => acc + task.subtasks.length, 0)}</strong> subtasks
-                          </div>
-                        </div>
-                      </div>
+                  <div className="col-12 col-md-4 mt-3 mt-md-0">
+                    <div className="d-flex justify-content-md-end">
+                      <Button variant="default" className="btn-sm" onClick={openNewTaskModal}>
+                        <Plus size={16} className="me-1" />
+                        New Task
+                      </Button>
                     </div>
-                  </Card>
-                </div>
-              </div>
-
-              {/* Action Bar */}
-              <div className="row mb-3">
-                <div className="col-12">
-                  <div className="d-flex justify-content-between align-items-center">
-                    <h5 className="mb-0 text-muted">Kanban Board</h5>
-                    <Button variant="primary" className="btn-sm" onClick={openNewTaskModal}>
-                      <Plus size={16} className="me-1" />
-                      New Task
-                    </Button>
                   </div>
                 </div>
               </div>
@@ -1012,21 +947,18 @@ function TasksPageContent() {
                   status="todo"
                   tasks={getTasksByStatus('todo')}
                   subtasks={getSubtasksByStatus('todo')}
-                  bgClass="border border-secondary bg-light"
                 />
                 <DroppableKanbanColumn
                   title="In Progress"
                   status="in_progress"
                   tasks={getTasksByStatus('in_progress')}
                   subtasks={getSubtasksByStatus('in_progress')}
-                  bgClass="border border-warning bg-warning bg-opacity-10"
                 />
                 <DroppableKanbanColumn
                   title="Done"
                   status="done"
                   tasks={getTasksByStatus('done')}
                   subtasks={getSubtasksByStatus('done')}
-                  bgClass="border border-success bg-success bg-opacity-10"
                 />
               </div>
             </div>
@@ -1038,97 +970,111 @@ function TasksPageContent() {
       {showModal && (
         <div
           className="modal fade show d-block"
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}
           onClick={closeModal}
         >
           <div
             className="modal-dialog modal-lg modal-dialog-scrollable"
             onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '700px', margin: '1.75rem auto' }}
           >
-            <div className="modal-content">
-              <div className="modal-header">
-                <div className="d-flex align-items-center">
+            <div className="modal-content border-0 shadow-lg">
+              <div className="modal-header border-bottom">
+                <div className="d-flex align-items-center w-100">
                   {selectedTask && (
-                    <>
+                    <div className="d-flex align-items-center">
                       {getPriorityIcon(selectedTask.priority)}
-                      <h5 className="modal-title ms-2 mb-0">
+                      <h5 className="modal-title ms-2 mb-0 fw-bold">
                         {selectedTask.title}
                       </h5>
-                      <span className="badge bg-secondary ms-2">{selectedTask.id.split('-')[1]}</span>
-                    </>
+                      <span className="badge bg-secondary ms-3">TASK-{selectedTask.id.split('-')[1]}</span>
+                    </div>
                   )}
                   {selectedSubtask && selectedSubtask.subtask && (
-                    <>
+                    <div className="d-flex align-items-center">
                       {getStatusIcon(selectedSubtask.subtask.status)}
-                      <h5 className="modal-title ms-2 mb-0">
+                      <h5 className="modal-title ms-2 mb-0 fw-bold">
                         {selectedSubtask.subtask.title}
                       </h5>
-                      <span className="badge bg-light text-dark ms-2">{selectedSubtask.subtask.id.split('-')[2]}</span>
-                    </>
+                      <span className="badge bg-light text-dark ms-3">SUB-{selectedSubtask.subtask.id.split('-')[2]}</span>
+                    </div>
                   )}
+                  <button
+                    type="button"
+                    className="btn-close ms-auto"
+                    onClick={closeModal}
+                  ></button>
                 </div>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={closeModal}
-                ></button>
               </div>
 
               <div className="modal-body">
                 {selectedTask && (
                   <div>
-                    <div className="row mb-3">
+                    <div className="row mb-4">
                       <div className="col-md-8">
-                        <h6 className="text-muted mb-2">Description</h6>
-                        <p className="mb-3">{selectedTask.description}</p>
+                        <h6 className="text-muted mb-3">Description</h6>
+                        <p className="mb-4">{selectedTask.description || 'No description provided'}</p>
+                        
+                        {selectedTask.labels.length > 0 && (
+                          <div className="mb-4">
+                            <h6 className="text-muted mb-2">Labels</h6>
+                            <div className="d-flex flex-wrap gap-2">
+                              {selectedTask.labels.map(label => (
+                                <span key={label} className="badge bg-light text-dark px-2 py-1">
+                                  {label}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <div className="col-md-4">
-                        <div className="card bg-light">
+                        <div className="card bg-light border-0">
                           <div className="card-body p-3">
-                            <h6 className="card-title">Details</h6>
-                            <div className="mb-2">
-                              <small className="text-muted">Status:</small>
-                              <span className={`badge ms-2 ${
+                            <h6 className="card-title mb-3">Task Details</h6>
+                            <div className="mb-3">
+                              <small className="text-muted d-block mb-1">Status</small>
+                              <span className={`badge px-2 py-1 ${
                                 selectedTask.status === 'done' ? 'bg-success' :
                                 selectedTask.status === 'in_progress' ? 'bg-warning' : 'bg-secondary'
                               }`}>
                                 {selectedTask.status.replace('_', ' ').toUpperCase()}
                               </span>
                             </div>
-                            <div className="mb-2">
-                              <small className="text-muted">Priority:</small>
-                              <span className={`badge ms-2 ${
+                            <div className="mb-3">
+                              <small className="text-muted d-block mb-1">Priority</small>
+                              <span className={`badge px-2 py-1 ${
                                 selectedTask.priority === 'high' ? 'bg-danger' :
                                 selectedTask.priority === 'medium' ? 'bg-warning' : 'bg-success'
                               }`}>
-                                {selectedTask.priority.toUpperCase()}
+                                {selectedTask.priority.charAt(0).toUpperCase() + selectedTask.priority.slice(1)}
                               </span>
                             </div>
-                            <div className="mb-2">
-                              <small className="text-muted">Assignee:</small>
+                            <div className="mb-3">
+                              <small className="text-muted d-block mb-1">Assignee</small>
                               <div className="d-flex align-items-center mt-1">
-                                <User size={14} className="me-1" />
+                                <User size={16} className="me-2 text-muted" />
                                 <span>{selectedTask.assignee}</span>
                               </div>
                             </div>
-                            <div className="mb-2">
-                              <small className="text-muted">Reporter:</small>
+                            <div className="mb-3">
+                              <small className="text-muted d-block mb-1">Reporter</small>
                               <div className="d-flex align-items-center mt-1">
-                                <User size={14} className="me-1" />
+                                <User size={16} className="me-2 text-muted" />
                                 <span>{selectedTask.reporter}</span>
                               </div>
                             </div>
-                            <div className="mb-2">
-                              <small className="text-muted">Due Date:</small>
+                            <div className="mb-3">
+                              <small className="text-muted d-block mb-1">Due Date</small>
                               <div className="d-flex align-items-center mt-1">
-                                <Calendar size={14} className="me-1" />
+                                <Calendar size={16} className="me-2 text-muted" />
                                 <span>{new Date(selectedTask.dueDate).toLocaleDateString()}</span>
                               </div>
                             </div>
-                            <div className="mb-2">
-                              <small className="text-muted">Estimated Hours:</small>
+                            <div className="mb-3">
+                              <small className="text-muted d-block mb-1">Estimated Hours</small>
                               <div className="d-flex align-items-center mt-1">
-                                <Clock size={14} className="me-1" />
+                                <Clock size={16} className="me-2 text-muted" />
                                 <span>{selectedTask.estimatedHours}h</span>
                               </div>
                             </div>
@@ -1137,23 +1083,15 @@ function TasksPageContent() {
                       </div>
                     </div>
 
-                    {selectedTask.labels.length > 0 && (
-                      <div className="mb-3">
-                        <h6 className="text-muted mb-2">Labels</h6>
-                        <div className="d-flex flex-wrap gap-1">
-                          {selectedTask.labels.map(label => (
-                            <span key={label} className="badge bg-light text-dark">{label}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
                     {selectedTask.subtasks.length > 0 && (
                       <div className="mb-3">
-                        <h6 className="text-muted mb-2">
-                          Subtasks ({selectedTask.subtasks.filter(st => st.status === 'done').length}/{selectedTask.subtasks.length})
-                        </h6>
-                        <div className="progress mb-3" style={{ height: '8px' }}>
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <h6 className="text-muted mb-0">Subtasks</h6>
+                          <span className="text-muted small">
+                            {selectedTask.subtasks.filter(st => st.status === 'done').length}/{selectedTask.subtasks.length} completed
+                          </span>
+                        </div>
+                        <div className="progress mb-3" style={{ height: '10px' }}>
                           <div
                             className="progress-bar"
                             style={{
@@ -1163,20 +1101,28 @@ function TasksPageContent() {
                         </div>
                         <div className="list-group">
                           {selectedTask.subtasks.map(subtask => (
-                            <div key={subtask.id} className="list-group-item" id={`subtaskItem-${subtask.id}`} onClick={(e) => handleSubtaskClick(subtask, selectedTask, e)} style={{ cursor: 'pointer' }}>
+                            <div 
+                              key={subtask.id} 
+                              className="list-group-item border rounded mb-2 p-3" 
+                              id={`subtaskItem-${subtask.id}`} 
+                              onClick={(e) => handleSubtaskClick(subtask, selectedTask, e)} 
+                              style={{ cursor: 'pointer' }}
+                            >
                               <div className="d-flex align-items-center">
                                 {getStatusIcon(subtask.status)}
-                                <div className="ms-2 flex-grow-1">
-                                  <h6 className="mb-1">{subtask.title}</h6>
-                                  <p className="mb-1 text-muted small">{subtask.description}</p>
+                                <div className="ms-3 flex-grow-1">
+                                  <h6 className="mb-1 fw-medium">{subtask.title}</h6>
+                                  {subtask.description && (
+                                    <p className="mb-2 text-muted small">{subtask.description}</p>
+                                  )}
                                   <div className="d-flex align-items-center small text-muted">
-                                    <User size={12} className="me-1" />
+                                    <User size={14} className="me-1" />
                                     <span className="me-3">{subtask.assignee}</span>
-                                    <Clock size={12} className="me-1" />
+                                    <Clock size={14} className="me-1" />
                                     <span>{subtask.estimatedHours}h</span>
                                   </div>
                                 </div>
-                                <span className={`badge ${
+                                <span className={`badge px-2 py-1 ${
                                   subtask.status === 'done' ? 'bg-success' :
                                   subtask.status === 'in_progress' ? 'bg-warning' : 'bg-secondary'
                                 }`}>
@@ -1193,14 +1139,14 @@ function TasksPageContent() {
 
                 {selectedSubtask && selectedSubtask.subtask && selectedSubtask.parentTask && (
                   <div>
-                    <div className="row mb-3">
+                    <div className="row mb-4">
                       <div className="col-md-8">
                         <h6 className="text-muted mb-2">Description</h6>
-                        <p className="mb-3">{selectedSubtask.subtask.description}</p>
+                        <p className="mb-4">{selectedSubtask.subtask.description || 'No description provided'}</p>
 
-                        <div className="alert alert-info">
-                          <h6 className="alert-heading d-flex align-items-center">
-                            <Flag size={16} className="me-2" />
+                        <div className="alert alert-info border-0">
+                          <h6 className="alert-heading d-flex align-items-center fw-semibold">
+                            <Flag size={18} className="me-2" />
                             Parent Task
                           </h6>
                           <p className="mb-0">
@@ -1210,46 +1156,46 @@ function TasksPageContent() {
                         </div>
                       </div>
                       <div className="col-md-4">
-                        <div className="card bg-light">
+                        <div className="card bg-light border-0">
                           <div className="card-body p-3">
-                            <h6 className="card-title">Details</h6>
-                            <div className="mb-2">
-                              <small className="text-muted">Status:</small>
-                              <span className={`badge ms-2 ${
+                            <h6 className="card-title mb-3">Subtask Details</h6>
+                            <div className="mb-3">
+                              <small className="text-muted d-block mb-1">Status</small>
+                              <span className={`badge px-2 py-1 ${
                                 selectedSubtask.subtask.status === 'done' ? 'bg-success' :
                                 selectedSubtask.subtask.status === 'in_progress' ? 'bg-warning' : 'bg-secondary'
                               }`}>
                                 {selectedSubtask.subtask.status.replace('_', ' ').toUpperCase()}
                               </span>
                             </div>
-                            <div className="mb-2">
-                              <small className="text-muted">Assignee:</small>
+                            <div className="mb-3">
+                              <small className="text-muted d-block mb-1">Assignee</small>
                               <div className="d-flex align-items-center mt-1">
-                                <User size={14} className="me-1" />
+                                <User size={16} className="me-2 text-muted" />
                                 <span>{selectedSubtask.subtask.assignee}</span>
                               </div>
                             </div>
-                            <div className="mb-2">
-                              <small className="text-muted">Estimated Hours:</small>
+                            <div className="mb-3">
+                              <small className="text-muted d-block mb-1">Estimated Hours</small>
                               <div className="d-flex align-items-center mt-1">
-                                <Clock size={14} className="me-1" />
+                                <Clock size={16} className="me-2 text-muted" />
                                 <span>{selectedSubtask.subtask.estimatedHours}h</span>
                               </div>
                             </div>
                             {selectedSubtask.subtask.startedDate && (
-                              <div className="mb-2">
-                                <small className="text-muted">Started:</small>
+                              <div className="mb-3">
+                                <small className="text-muted d-block mb-1">Started</small>
                                 <div className="d-flex align-items-center mt-1">
-                                  <Calendar size={14} className="me-1" />
+                                  <Calendar size={16} className="me-2 text-muted" />
                                   <span>{new Date(selectedSubtask.subtask.startedDate).toLocaleDateString()}</span>
                                 </div>
                               </div>
                             )}
                             {selectedSubtask.subtask.completedDate && (
-                              <div className="mb-2">
-                                <small className="text-muted">Completed:</small>
+                              <div className="mb-3">
+                                <small className="text-muted d-block mb-1">Completed</small>
                                 <div className="d-flex align-items-center mt-1">
-                                  <Calendar size={14} className="me-1" />
+                                  <Calendar size={16} className="me-2 text-muted" />
                                   <span>{new Date(selectedSubtask.subtask.completedDate).toLocaleDateString()}</span>
                                 </div>
                               </div>
@@ -1262,7 +1208,7 @@ function TasksPageContent() {
                 )}
               </div>
 
-              <div className="modal-footer d-flex justify-content-between">
+              <div className="modal-footer border-top d-flex justify-content-between">
                 <div className="d-flex gap-2">
                   {selectedTask && (
                     <>
@@ -1335,18 +1281,19 @@ function TasksPageContent() {
       {showNewTaskModal && (
         <div
           className="modal fade show d-block"
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}
           onClick={closeNewTaskModal}
         >
           <div
             className="modal-dialog modal-lg"
             onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '800px', margin: '1.75rem auto' }}
           >
-            <div className="modal-content">
-              <div className="modal-header">
+            <div className="modal-content border-0 shadow-lg">
+              <div className="modal-header border-bottom">
                 <div className="d-flex align-items-center">
                   <Plus size={20} className="text-primary me-2" />
-                  <h5 className="modal-title mb-0">Create New Task</h5>
+                  <h5 className="modal-title mb-0 fw-bold">Create New Task</h5>
                 </div>
                 <button
                   type="button"
@@ -1359,9 +1306,9 @@ function TasksPageContent() {
                 <form>
                   <div className="row">
                     <div className="col-md-8">
-                      <div className="mb-3">
-                        <label htmlFor="taskTitle" className="form-label">
-                          <strong>Task Title *</strong>
+                      <div className="mb-4">
+                        <label htmlFor="taskTitle" className="form-label fw-medium">
+                          Task Title <span className="text-danger">*</span>
                         </label>
                         <input
                           type="text"
@@ -1374,23 +1321,23 @@ function TasksPageContent() {
                         />
                       </div>
 
-                      <div className="mb-3">
-                        <label htmlFor="taskDescription" className="form-label">
-                          <strong>Description</strong>
+                      <div className="mb-4">
+                        <label htmlFor="taskDescription" className="form-label fw-medium">
+                          Description
                         </label>
                         <textarea
                           className="form-control"
                           id="taskDescription"
-                          rows={3}
+                          rows={4}
                           placeholder="Describe the task in detail..."
                           value={newTaskForm.description}
                           onChange={(e) => handleFormChange('description', e.target.value)}
                         ></textarea>
                       </div>
 
-                      <div className="mb-3">
-                        <label htmlFor="taskLabels" className="form-label">
-                          <strong>Labels</strong>
+                      <div className="mb-4">
+                        <label htmlFor="taskLabels" className="form-label fw-medium">
+                          Labels
                         </label>
                         <input
                           type="text"
@@ -1405,13 +1352,13 @@ function TasksPageContent() {
                     </div>
 
                     <div className="col-md-4">
-                      <div className="card bg-light h-100">
+                      <div className="card bg-light border-0 h-100">
                         <div className="card-body">
-                          <h6 className="card-title">Task Details</h6>
+                          <h6 className="card-title mb-4 fw-bold">Task Details</h6>
 
-                          <div className="mb-3">
-                            <label htmlFor="taskPriority" className="form-label">
-                              <strong>Priority</strong>
+                          <div className="mb-4">
+                            <label htmlFor="taskPriority" className="form-label fw-medium">
+                              Priority
                             </label>
                             <select
                               className="form-select"
@@ -1425,9 +1372,9 @@ function TasksPageContent() {
                             </select>
                           </div>
 
-                          <div className="mb-3">
-                            <label htmlFor="taskAssignee" className="form-label">
-                              <strong>Assignee</strong>
+                          <div className="mb-4">
+                            <label htmlFor="taskAssignee" className="form-label fw-medium">
+                              Assignee
                             </label>
                             <select
                               className="form-select"
@@ -1441,9 +1388,9 @@ function TasksPageContent() {
                             </select>
                           </div>
 
-                          <div className="mb-3">
-                            <label htmlFor="taskDueDate" className="form-label">
-                              <strong>Due Date</strong>
+                          <div className="mb-4">
+                            <label htmlFor="taskDueDate" className="form-label fw-medium">
+                              Due Date
                             </label>
                             <input
                               type="date"
@@ -1455,9 +1402,9 @@ function TasksPageContent() {
                             />
                           </div>
 
-                          <div className="mb-3">
-                            <label htmlFor="taskEstimatedHours" className="form-label">
-                              <strong>Estimated Hours</strong>
+                          <div className="mb-4">
+                            <label htmlFor="taskEstimatedHours" className="form-label fw-medium">
+                              Estimated Hours
                             </label>
                             <input
                               type="number"
@@ -1470,8 +1417,8 @@ function TasksPageContent() {
                             />
                           </div>
 
-                          <div className="alert alert-info small">
-                            <strong>Note:</strong> The task will be created in the "To Do" column and can be moved later.
+                          <div className="alert alert-info border-0 small">
+                            <strong>Note:</strong> The task will be created in the &quot;To Do&quot; column and can be moved later.
                           </div>
                         </div>
                       </div>
@@ -1480,7 +1427,7 @@ function TasksPageContent() {
                 </form>
               </div>
 
-              <div className="modal-footer">
+              <div className="modal-footer border-top">
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -1507,18 +1454,19 @@ function TasksPageContent() {
       {showAddSubtaskModal && selectedTask && (
         <div
           className="modal fade show d-block"
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}
           onClick={closeAddSubtaskModal}
         >
           <div
             className="modal-dialog modal-lg"
             onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '800px', margin: '1.75rem auto' }}
           >
-            <div className="modal-content">
-              <div className="modal-header">
+            <div className="modal-content border-0 shadow-lg">
+              <div className="modal-header border-bottom">
                 <div className="d-flex align-items-center">
                   <Plus size={20} className="text-success me-2" />
-                  <h5 className="modal-title mb-0">Add Subtask to "{selectedTask.title}"</h5>
+                  <h5 className="modal-title mb-0 fw-bold">Add Subtask to &quot;{selectedTask.title}&quot;</h5>
                 </div>
                 <button
                   type="button"
@@ -1531,9 +1479,9 @@ function TasksPageContent() {
                 <form>
                   <div className="row">
                     <div className="col-md-8">
-                      <div className="mb-3">
-                        <label htmlFor="subtaskTitle" className="form-label">
-                          <strong>Subtask Title *</strong>
+                      <div className="mb-4">
+                        <label htmlFor="subtaskTitle" className="form-label fw-medium">
+                          Subtask Title <span className="text-danger">*</span>
                         </label>
                         <input
                           type="text"
@@ -1546,14 +1494,14 @@ function TasksPageContent() {
                         />
                       </div>
 
-                      <div className="mb-3">
-                        <label htmlFor="subtaskDescription" className="form-label">
-                          <strong>Description</strong>
+                      <div className="mb-4">
+                        <label htmlFor="subtaskDescription" className="form-label fw-medium">
+                          Description
                         </label>
                         <textarea
                           className="form-control"
                           id="subtaskDescription"
-                          rows={3}
+                          rows={4}
                           placeholder="Describe the subtask in detail..."
                           value={newSubtaskForm.description}
                           onChange={(e) => handleSubtaskFormChange('description', e.target.value)}
@@ -1562,13 +1510,13 @@ function TasksPageContent() {
                     </div>
 
                     <div className="col-md-4">
-                      <div className="card bg-light h-100">
+                      <div className="card bg-light border-0 h-100">
                         <div className="card-body">
-                          <h6 className="card-title">Subtask Details</h6>
+                          <h6 className="card-title mb-4 fw-bold">Subtask Details</h6>
 
-                          <div className="mb-3">
-                            <label htmlFor="subtaskAssignee" className="form-label">
-                              <strong>Assignee</strong>
+                          <div className="mb-4">
+                            <label htmlFor="subtaskAssignee" className="form-label fw-medium">
+                              Assignee
                             </label>
                             <select
                               className="form-select"
@@ -1582,9 +1530,9 @@ function TasksPageContent() {
                             </select>
                           </div>
 
-                          <div className="mb-3">
-                            <label htmlFor="subtaskEstimatedHours" className="form-label">
-                              <strong>Estimated Hours</strong>
+                          <div className="mb-4">
+                            <label htmlFor="subtaskEstimatedHours" className="form-label fw-medium">
+                              Estimated Hours
                             </label>
                             <input
                               type="number"
@@ -1597,9 +1545,9 @@ function TasksPageContent() {
                             />
                           </div>
 
-                          <div className="alert alert-info small">
+                          <div className="alert alert-info border-0 small">
                             <strong>Parent Task:</strong> {selectedTask.title}<br />
-                            <strong>Note:</strong> The subtask will be created in the "To Do" status and can be moved later.
+                            <strong>Note:</strong> The subtask will be created in the &quot;To Do&quot; status and can be moved later.
                           </div>
                         </div>
                       </div>
@@ -1608,7 +1556,7 @@ function TasksPageContent() {
                 </form>
               </div>
 
-              <div className="modal-footer">
+              <div className="modal-footer border-top">
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -1635,18 +1583,19 @@ function TasksPageContent() {
       {showEditSubtaskModal && selectedSubtask && selectedSubtask.subtask && selectedSubtask.parentTask && (
         <div
           className="modal fade show d-block"
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}
           onClick={closeEditSubtaskModal}
         >
           <div
             className="modal-dialog modal-lg"
             onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '800px', margin: '1.75rem auto' }}
           >
-            <div className="modal-content">
-              <div className="modal-header">
+            <div className="modal-content border-0 shadow-lg">
+              <div className="modal-header border-bottom">
                 <div className="d-flex align-items-center">
                   <Edit size={20} className="text-primary me-2" />
-                  <h5 className="modal-title mb-0">Edit Subtask</h5>
+                  <h5 className="modal-title mb-0 fw-bold">Edit Subtask</h5>
                 </div>
                 <button
                   type="button"
@@ -1659,9 +1608,9 @@ function TasksPageContent() {
                 <form>
                   <div className="row">
                     <div className="col-md-8">
-                      <div className="mb-3">
-                        <label htmlFor="editSubtaskTitle" className="form-label">
-                          <strong>Subtask Title *</strong>
+                      <div className="mb-4">
+                        <label htmlFor="editSubtaskTitle" className="form-label fw-medium">
+                          Subtask Title <span className="text-danger">*</span>
                         </label>
                         <input
                           type="text"
@@ -1674,14 +1623,14 @@ function TasksPageContent() {
                         />
                       </div>
 
-                      <div className="mb-3">
-                        <label htmlFor="editSubtaskDescription" className="form-label">
-                          <strong>Description</strong>
+                      <div className="mb-4">
+                        <label htmlFor="editSubtaskDescription" className="form-label fw-medium">
+                          Description
                         </label>
                         <textarea
                           className="form-control"
                           id="editSubtaskDescription"
-                          rows={3}
+                          rows={4}
                           placeholder="Describe the subtask in detail..."
                           value={editSubtaskForm.description}
                           onChange={(e) => handleEditSubtaskFormChange('description', e.target.value)}
@@ -1690,26 +1639,26 @@ function TasksPageContent() {
                     </div>
 
                     <div className="col-md-4">
-                      <div className="card bg-light h-100">
+                      <div className="card bg-light border-0 h-100">
                         <div className="card-body">
-                          <h6 className="card-title">Subtask Details</h6>
+                          <h6 className="card-title mb-4 fw-bold">Subtask Details</h6>
 
-                          <div className="mb-3">
-                            <label htmlFor="editSubtaskStatus" className="form-label">
-                              <strong>Current Status</strong>
+                          <div className="mb-4">
+                            <label htmlFor="editSubtaskStatus" className="form-label fw-medium">
+                              Current Status
                             </label>
                             <div className="d-flex align-items-center">
                               {getStatusIcon(selectedSubtask.subtask.status)}
-                              <span className="ms-2 badge bg-secondary">
+                              <span className="ms-2 badge px-2 py-1 bg-secondary">
                                 {selectedSubtask.subtask.status.replace('_', ' ').toUpperCase()}
                               </span>
                             </div>
                             <small className="text-muted">Status can be changed by dragging the subtask to different columns</small>
                           </div>
 
-                          <div className="mb-3">
-                            <label htmlFor="editSubtaskAssignee" className="form-label">
-                              <strong>Assignee</strong>
+                          <div className="mb-4">
+                            <label htmlFor="editSubtaskAssignee" className="form-label fw-medium">
+                              Assignee
                             </label>
                             <select
                               className="form-select"
@@ -1723,9 +1672,9 @@ function TasksPageContent() {
                             </select>
                           </div>
 
-                          <div className="mb-3">
-                            <label htmlFor="editSubtaskEstimatedHours" className="form-label">
-                              <strong>Estimated Hours</strong>
+                          <div className="mb-4">
+                            <label htmlFor="editSubtaskEstimatedHours" className="form-label fw-medium">
+                              Estimated Hours
                             </label>
                             <input
                               type="number"
@@ -1738,7 +1687,7 @@ function TasksPageContent() {
                             />
                           </div>
 
-                          <div className="alert alert-info small">
+                          <div className="alert alert-info border-0 small">
                             <strong>Parent Task:</strong> {selectedSubtask.parentTask.title}<br />
                             <strong>Subtask ID:</strong> {selectedSubtask.subtask.id}
                           </div>
@@ -1749,7 +1698,7 @@ function TasksPageContent() {
                 </form>
               </div>
 
-              <div className="modal-footer">
+              <div className="modal-footer border-top">
                 <button
                   type="button"
                   className="btn btn-secondary"

@@ -33,7 +33,7 @@
           "id": "subtask-1-2",
           "title": "Implement API endpoints",
           "description": "Create REST API endpoints for student CRUD operations",
-          "status": "in_progress",
+          "status": "todo",
           "assignee": "John Smith",
           "assigneeId": 1,
           "estimatedHours": 16,
@@ -54,7 +54,7 @@
       "id": "task-2",
       "title": "Grade Management Portal",
       "description": "Build a portal for teachers to manage student grades and generate reports",
-      "status": "in_progress",
+      "status": "todo",
       "priority": "medium",
       "assignee": "Michael Davis",
       "assigneeId": 3,
@@ -207,7 +207,7 @@
       "id": "task-5",
       "title": "Parent Communication Portal",
       "description": "Create a secure portal for parent-teacher communication and progress tracking",
-      "status": "in_progress",
+      "status": "todo",
       "priority": "low",
       "assignee": "Nicole Hall",
       "assigneeId": 18,
@@ -237,7 +237,7 @@
           "id": "subtask-5-2",
           "title": "Progress sharing interface",
           "description": "Build interface for sharing student progress and assignments with parents",
-          "status": "in_progress",
+          "status": "todo",
           "assignee": "Nicole Hall",
           "assigneeId": 18,
           "estimatedHours": 25,
@@ -276,12 +276,12 @@
     "totalSubtasks": 15,
     "byStatus": {
       "todo": {
-        "tasks": 3,
-        "subtasks": 7
+        "tasks": 5,
+        "subtasks": 9
       },
       "in_progress": {
-        "tasks": 2,
-        "subtasks": 2
+        "tasks": 0,
+        "subtasks": 0
       },
       "done": {
         "tasks": 1,
