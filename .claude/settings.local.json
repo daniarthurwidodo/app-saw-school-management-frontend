@@ -8,7 +8,11 @@
       "WebFetch(domain:codepen.io)",
       "Bash(curl:*)",
       "Bash(find:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(cp:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []
